@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Cartographie Agricole</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+    <div class="dashboard">
+        <header>
+            <h1>Rendement Économique par Département</h1>
+            <<div class="controls">
+                <div class="control-group">
+                    <label>Culture :</label>
+                    <select id="select-culture"></select>
+                </div>
+
+                <div class="control-group">
+                    <label>Saison :</label>
+                    <select id="select-saison">
+                        <option value="Été (Récolte)">Été</option>
+                        <option value="Hiver (Stockage)">Hiver</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Année :</label>
+                    <select id="select-annee"></select>
+                </div>
+</div>
+        </header>
+
+        <div id="map-container"></div>
+    </div>
+
+    <div id="tooltip" class="hidden"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
