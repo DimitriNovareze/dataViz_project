@@ -1,55 +1,154 @@
+:root {
+    --primary: #2c3e50;
+    --accent: #27ae60;
+    --bg: #f4f7f6;
+    --text: #333;
+}
+
 body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background-color: #f8f9fa;
     margin: 0;
-    color: #333;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
 }
 
-.dashboard {
-    max-width: 1000px;
-    margin: 20px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-}
-
-header {
-    border-bottom: 2px solid #eee;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
+.dashboard-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    height: 100vh;
 }
 
-.controls { display: flex; gap: 20px; }
-.control-group label { font-weight: bold; margin-right: 8px; }
+/* Sidebar */
+.sidebar {
+    width: 300px;
+    background: white;
+    padding: 2rem;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
 
+.header h1 { font-size: 1.5rem; color: var(--primary); margin: 0; }
+.header p { color: #7f8c8d; font-size: 0.9rem; margin-top: 5px; }
+
+.controls { margin-top: 2rem; flex-grow: 1; }
+
+.control-group { margin-bottom: 1.5rem; }
+.control-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
 select {
-    padding: 8px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
     border-radius: 6px;
+    font-size: 1rem;
+    background: #fff;
+}
+
+/* Bouton Retour */
+#breadcrumb {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+    animation: fadeIn 0.3s ease;
+}
+#btn-back {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+#btn-back:hover { background: #34495e; }
+#region-title { text-align: center; margin-top: 10px; font-weight: bold; color: var(--accent); }
+
+/* Légende */
+.legend-container { margin-top: auto; }
+#legend {
+    height: 15px;
+    background: linear-gradient(to right, #ffffe5, #004529); /* Correspond à YlGn */
+    border-radius: 10px;
+    margin: 10px 0;
+}
+.legend-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
+
+/* Carte */
+.map-wrapper { flex-grow: 1; position: relative; background: #eef2f3; }
+#map-container { width: 100%; height: 100%; }
+
+path {
+    transition: fill 0.4s ease, stroke 0.2s;
+    cursor: pointer;
+}
+path:hover { stroke: #333; stroke-width: 2px; filter: brightness(0.9); }
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.hidden { display: none !important; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.star {
+    fill: #FFD700;       /* Or / Jaune brillant */
+    stroke: #333;        /* Contour sombre pour le contraste */
+    stroke-width: 0.5px;
+    pointer-events: none; /* Laisse le clic passer à travers vers la carte */
+    transition: transform 0.5s ease;        
+}
+
+/* Ajustement pour que la légende soit claire */
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.legend-star-icon {
+    fill: #FFD700;
+    stroke: #333;
+    stroke-width: 1px;
+}
+
+/* Style des barres de légende */
+.legend-bar {
+    height: 12px;
+    background: linear-gradient(to right, #f7fcf5, #00441b); /* Verts */
+    border-radius: 6px;
+    margin: 5px 0;
     border: 1px solid #ccc;
 }
 
-#map-container {
-    width: 100%;
-    height: 600px;
+/* Conteneur pour la légende des cercles */
+#legend-size-container {
+    height: 60px;
     display: flex;
+    align-items: center;
     justify-content: center;
 }
 
-/* Tooltip stylisé */
-#tooltip {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 4px;
-    pointer-events: none;
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    line-height: 1.4;
+/* Texte des légendes */
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #555;
 }
-
-.hidden { display: none; }
