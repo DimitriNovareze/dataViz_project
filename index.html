@@ -2,42 +2,69 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Cartographie Agricole</title>
+    <title>Dashboard Agricole France</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
 
-    <div class="dashboard">
-        <header>
-            <h1>Rendement Économique par Département</h1>
-            <<div class="controls">
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="header">
+                <h1>Rentabilité Agricole</h1>
+                <p>Analyse par Région & Département</p>
+            </div>
+
+            <div class="controls">
                 <div class="control-group">
-                    <label>Culture :</label>
+                    <label>Culture</label>
                     <select id="select-culture"></select>
                 </div>
-
                 <div class="control-group">
                     <label>Saison :</label>
-                    <select id="select-saison">
-                        <option value="Été (Récolte)">Été</option>
-                        <option value="Hiver (Stockage)">Hiver</option>
-                    </select>
+                    <select id="select-saison"></select> 
                 </div>
-
                 <div class="control-group">
-                    <label>Année :</label>
+                    <label>Année</label>
                     <select id="select-annee"></select>
                 </div>
-</div>
-        </header>
+                
+                <div id="breadcrumb" class="hidden">
+                    <button id="btn-back">
+                        <span class="icon">⬅</span> Vue Nationale
+                    </button>
+                    <div id="region-title">France Entière</div>
+                </div>
+            </div>
+            
+            <div class="legend-container">
+                <div class="legend-block">
+                    <label>Production (Tonnes)</label>
+                    <div id="legend-color-gradient" class="legend-bar"></div>
+                    <div class="legend-labels">
+                        <span id="legend-prod-min">0 T</span>
+                        <span id="legend-prod-max">0 T</span>
+                    </div>
+                </div>
 
-        <div id="map-container"></div>
+                <div class="legend-block" style="margin-top: 15px;">
+                    <label>Rendement (€/ha)</label>
+                    <div id="legend-size-container">
+                        </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="map-wrapper">
+            <div id="map-container"></div>
+        </main>
+
     </div>
 
-    <div id="tooltip" class="hidden"></div>
+    <div id="tooltip" class="tooltip hidden"></div>
 
     <script src="script.js"></script>
 </body>
 </html>
-
