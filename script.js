@@ -318,7 +318,7 @@ function calculateScales(stats) {
 
 
 let chartSvg, chartG, xScale, yScale, lineGenerator, xAxis, yAxis;
-const chartMargin = { top: 10, right: 30, bottom: 20, left: 50 };
+const chartMargin = { top: 10, right: 30, bottom: 20, left: 70 };
 
 function initChartContainer() {
     const container = document.getElementById('line-chart');
@@ -345,6 +345,36 @@ function initChartContainer() {
 
     // Ligne
     chartG.append("path").attr("class", "line-path");
+
+//TOOLTIP
+
+    const focus = chartG.append("g")
+        .attr("class", "focus")
+        .style("display", "none");
+
+    // Ligne verticale
+    focus.append("line")
+        .attr("class", "focus-line")
+        .attr("y1", 0)
+        .style("stroke", "#999")
+        .style("stroke-width", "1px")
+        .style("stroke-dasharray", "3 3"); // Ligne en pointillés
+
+    // Petit cercle sur la courbe
+    focus.append("circle")
+        .attr("class", "focus-circle")
+        .attr("r", 5)
+        .style("fill", "#fff")
+        .style("stroke", "#333")
+        .style("stroke-width", "2px");
+
+    // Rectangle invisible par-dessus le graphique pour capter la souris
+    chartG.append("rect")
+        .attr("class", "overlay")
+        .style("fill", "none")
+        .style("pointer-events", "all");
+
+
 
     // Listeners sur les boutons radio
     d3.selectAll("input[name='metric']").on("change", function() {
@@ -429,7 +459,83 @@ function updateChart() {
         .attr("d", line)
         .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : 
                         isMonthly ? "#2980b9" : "#27ae60");
+
+//TOOL TIP
+
+    const innerWidth = document.getElementById('line-chart').clientWidth - chartMargin.left - chartMargin.right;
+    const innerHeight = document.getElementById('line-chart').clientHeight - chartMargin.top - chartMargin.bottom;
+    
+    chartG.select(".overlay")
+        .attr("width", innerWidth)
+        .attr("height", innerHeight);
+        
+    chartG.select(".focus-line").attr("y2", innerHeight);
+
+    // Outil mathématique pour trouver le point le plus proche
+    const bisectDate = d3.bisector(d => d[0]).left;
+
+    // Interactions souris
+    chartG.select(".overlay")
+        .on("mouseover", () => {
+            if (nested.length > 0) {
+                chartG.select(".focus").style("display", null);
+                tooltip.classed("hidden", false);
+            }
+        })
+        .on("mouseout", () => {
+            chartG.select(".focus").style("display", "none");
+            tooltip.classed("hidden", true);
+        })
+        .on("mousemove", (event) => {
+            if (nested.length === 0) return;
+
+            // Déduire la date pointée par la souris sur l'axe X
+            const x0 = xScale.invert(d3.pointer(event)[0]);
+            
+            // Trouver l'index de la donnée la plus proche
+            const i = bisectDate(nested, x0, 1);
+            const d0 = nested[i - 1];
+            const d1 = nested[i];
+            
+            // Choisir le point exact le plus proche (à gauche ou à droite de la souris)
+            let d;
+            if (!d0) d = d1;
+            else if (!d1) d = d0;
+            else d = x0 - d0[0] > d1[0] - x0 ? d1 : d0;
+
+            // Déplacer la ligne verticale et le cercle
+            chartG.select(".focus")
+                .attr("transform", `translate(${xScale(d[0])},0)`);
+            chartG.select(".focus-circle")
+                .attr("cy", yScale(d[1]))
+                .style("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : isMonthly ? "#2980b9" : "#27ae60");
+
+            // Formatage de la date (Année simple ou Mois + Année)
+            const timeStr = isMonthly 
+                ? d[0].toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) 
+                : d[0].getFullYear();
+            
+            // Formatage de la valeur affichée
+            let valStr = "";
+            if (STATE.chart.metric === 'rentabilite') {
+                valStr = Math.round(d[1]).toLocaleString() + " €/ha";
+            } else {
+                valStr = Math.round(d[1]).toLocaleString() + (STATE.chart.metric === 'stock' ? " T" : " T");
+            }
+
+            // Affichage dans le HTML du tooltip (le même qu'on utilise pour la carte !)
+            tooltip.html(`<div style="text-align:center;">
+                            <strong>${timeStr}</strong><br/>
+                            <span style="font-size:1.1em; color:#FFD700">${valStr}</span>
+                          </div>`)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 30) + "px");
+        });
 }
+
+
+
+
 // --- RENDERERS ---------------------------------------------------------------
 
 function renderMapLayer(data, scales) {
