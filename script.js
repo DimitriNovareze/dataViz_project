@@ -59,6 +59,12 @@ const STATE = {
     view: {             // État de la vue
         regionCode: null, // null = Vue Nationale
         zoomLevel: 1
+    },
+
+    chart: {
+        metric: 'production', // 'production', 'rentabilite', ou 'stock'
+        targetName: 'France',
+        targetCode: null // null = France, sinon Code Région/Dept
     }
 };
 
@@ -99,7 +105,8 @@ async function initApp() {
             Annee: Utils.parseNum(d.Annee),
             Saison: d.saison || "Annuel",
             rend_euro_par_ha: Utils.parseNum(d.rend_euro_par_ha),
-            production: Utils.parseNum(d.PROD) // Mapping PROD
+            production: Utils.parseNum(d.PROD),
+            stock: Utils.parseNum(d.STOCKS),
         }));
 
         STATE.geo.regions = regionsGeo;
@@ -111,6 +118,10 @@ async function initApp() {
 
         // Premier Rendu ///////////////////////////////////////////////////////
         updateEngine();
+
+        // Line Chart
+        initChartContainer();
+        updateChart();
 
     } catch (error) {
         console.error("Erreur critique:", error);
@@ -196,7 +207,7 @@ function updateEngine() {
     const filtered = STATE.data.filter(d => 
         d.culture === STATE.filters.culture && 
         d.Annee === STATE.filters.Annee && 
-        d.Saison === STATE.filters.saison
+        d.Saison === STATE.filters.saison   
     );
 
     // 2. Préparer la géométrie et les stats
@@ -287,6 +298,111 @@ function calculateScales(stats) {
     };
 }
 
+
+
+
+
+
+let chartSvg, chartG, xScale, yScale, lineGenerator, xAxis, yAxis;
+const chartMargin = { top: 10, right: 30, bottom: 20, left: 50 };
+
+function initChartContainer() {
+    const container = document.getElementById('line-chart');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    
+    // Création SVG unique
+    chartSvg = d3.select("#line-chart").append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", `0 0 ${w} ${h}`);
+        
+    chartG = chartSvg.append("g")
+        .attr("transform", `translate(${chartMargin.left},${chartMargin.top})`);
+
+    // Init échelles
+    xScale = d3.scaleLinear().range([0, w - chartMargin.left - chartMargin.right]);
+    yScale = d3.scaleLinear().range([h - chartMargin.top - chartMargin.bottom, 0]);
+
+    // Axes
+    chartG.append("g").attr("class", "x-axis")
+        .attr("transform", `translate(0, ${h - chartMargin.top - chartMargin.bottom})`);
+    chartG.append("g").attr("class", "y-axis");
+
+    // Ligne
+    chartG.append("path").attr("class", "line-path");
+
+    // Listeners sur les boutons radio
+    d3.selectAll("input[name='metric']").on("change", function() {
+        STATE.chart.metric = this.value;
+        updateChart();
+    });
+}
+
+function updateChart() {
+    // 1. Préparation des données historiques
+    // On filtre TOUTES les années pour la culture/saison sélectionnée
+    let historyData = STATE.data.filter(d => 
+        d.culture === STATE.filters.culture && 
+        d.Saison === STATE.filters.saison
+    );
+
+    // 2. Filtrage Géographique (France, Région ou Département)
+    let title = "France";
+    
+    if (STATE.chart.targetCode) {
+        if (STATE.view.regionCode === null) { 
+            // Si on survole une Région en vue nationale
+            // On agrège tous les départements de cette région
+             historyData = historyData.filter(d => CONFIG.deptToRegion[d.Dep_Code] === STATE.chart.targetCode);
+             title = STATE.chart.targetName; // Nom de la région survolée
+        } else {
+            // Si on survole un Département
+            historyData = historyData.filter(d => d.Dep_Code === STATE.chart.targetCode);
+            title = STATE.chart.targetName;
+        }
+    }
+
+    // 3. Agrégation par Année (Somme pour Prod/Stock, Moyenne pour Rentabilité)
+    const nested = d3.rollups(historyData, 
+        v => {
+            if (STATE.chart.metric === 'rentabilite') return d3.mean(v, d => d.rend_euro_par_ha);
+            return d3.sum(v, d => d[STATE.chart.metric === 'stock' ? 'stock' : 'production']); 
+        },
+        d => d.Annee
+    ).sort((a, b) => a[0] - b[0]); // Trier par année
+
+    // Mise à jour Titre
+    d3.select("#chart-title").text(`${title} : Historique ${STATE.chart.metric}`);
+
+    if (nested.length === 0) {
+        chartG.select(".line-path").attr("d", null);
+        return;
+    }
+
+    // 4. Mise à jour Echelles & Axes
+    xScale.domain(d3.extent(nested, d => d[0]));
+    yScale.domain([0, d3.max(nested, d => d[1]) * 1.1]); // +10% de marge en haut
+
+    const w = document.getElementById('line-chart').clientWidth;
+    xScale.range([0, w - chartMargin.left - chartMargin.right]); // Réajustement responsive rapide
+
+    chartG.select(".x-axis").transition().call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+    chartG.select(".y-axis").transition().call(d3.axisLeft(yScale).ticks(5));
+
+    // 5. Dessin de la ligne
+    const line = d3.line()
+        .x(d => xScale(d[0]))
+        .y(d => yScale(d[1]))
+        .curve(d3.curveMonotoneX); // Courbe lissée
+
+    chartG.select(".line-path")
+        .datum(nested)
+        .transition().duration(500)
+        .attr("d", line)
+        .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : "#27ae60");
+}
+
 // --- RENDERERS ---------------------------------------------------------------
 
 function renderMapLayer(data, scales) {
@@ -294,27 +410,42 @@ function renderMapLayer(data, scales) {
         .data(data.features, d => d.properties.code);
 
     paths.join(
+        // ... (enter et update restent identiques) ...
         enter => enter.append("path")
             .attr("class", "map-area")
             .attr("d", path)
-            .attr("stroke", CONFIG.visu.colors.mapStroke)
-            .attr("stroke-width", (0.5 / STATE.view.zoomLevel) + "px")
-            .attr("fill", CONFIG.visu.colors.mapFill)
+            // ... reste du style ...
             .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
                 .attr("fill", d => getFillColor(d, data.map, scales.color))),
         
         update => update.call(u => u.transition().duration(CONFIG.visu.transitionDuration)
             .attr("d", path)
-            .attr("stroke-width", (0.5 / STATE.view.zoomLevel) + "px")
-            .attr("fill", d => getFillColor(d, data.map, scales.color))),
-        
-        exit => exit.remove()
+            .attr("fill", d => getFillColor(d, data.map, scales.color)))
     )
     .on("click", (e, d) => handleZoom(d))
-    .on("mousemove", (e, d) => showTooltip(e, d, data.map, scales))
-    .on("mouseout", () => tooltip.classed("hidden", true));
+    
+    // --- MODIFICATION ICI : MOUSEMOVE ---
+    .on("mousemove", (e, d) => {
+        showTooltip(e, d, data.map, scales);
+        
+        // Mise à jour du graphique SI on change de cible
+        if (STATE.chart.targetCode !== d.properties.code) {
+            STATE.chart.targetCode = d.properties.code;
+            STATE.chart.targetName = d.properties.nom;
+            updateChart();
+        }
+    })
+    
+    // --- MODIFICATION ICI : MOUSEOUT ---
+    .on("mouseout", () => {
+        tooltip.classed("hidden", true);
+        
+        // Optionnel : Revenir à la vue nationale quand on quitte
+        // STATE.chart.targetCode = null;
+        // STATE.chart.targetName = "France";
+        // updateChart();
+    });
 }
-
 function renderSymbolsLayer(data, scales) {
     const stars = g.selectAll("path.star")
         .data(data.features, d => d.properties.code);
