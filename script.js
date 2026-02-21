@@ -103,10 +103,13 @@ async function initApp() {
             ...d,
             Dep_Code: d.Dep_Code ? d.Dep_Code.toString().padStart(2, '0') : "00",
             Annee: Utils.parseNum(d.Annee),
+            Mois: Utils.parseNum(d.MOIS),
+            
             Saison: d.saison || "Annuel",
             rend_euro_par_ha: Utils.parseNum(d.rend_euro_par_ha),
             production: Utils.parseNum(d.PROD),
             stock: Utils.parseNum(d.STOCKS),
+            Surface: Utils.parseNum(d.SURF),
         }));
 
         STATE.geo.regions = regionsGeo;
@@ -223,29 +226,45 @@ function updateEngine() {
     // 5. Mettre à jour les légendes
     renderLegends(processed.stats, scales);
 }
-
 function processGeoData(filteredData) {
-    let geoFeatures, dataMap, maxProd = 0, maxRent = 0, minRent = Infinity;
+    let geoFeatures, dataMap = new Map(), maxProd = 0, maxRent = 0, minRent = Infinity;
+
+    // 1. ÉTAPE CLÉ : Dédoublonner en moyennant les 12 lignes de chaque département
+    const deptAnnualStats = d3.rollup(filteredData, 
+        v => ({
+            production: d3.mean(v, d => d.production), // La moyenne donne la vraie valeur annuelle
+            rentabilite: d3.mean(v, d => d.rend_euro_par_ha)
+        }),
+        d => d.Dep_Code
+    );
 
     if (STATE.view.regionCode === null) {
         // --- VUE NATIONALE ---
         geoFeatures = STATE.geo.regions.features;
         
-        // Agrégation par Région
-        const rollup = d3.rollup(filteredData, 
-            v => ({
-                production: d3.sum(v, d => d.production),
-                rentabilite: d3.mean(v, d => d.rend_euro_par_ha)
-            }),
-            d => CONFIG.deptToRegion[d.Dep_Code]
-        );
-        dataMap = rollup;
+        // 2. Agréger les vraies valeurs départementales par région
+        const regionStats = new Map();
+        for (const [deptCode, stats] of deptAnnualStats.entries()) {
+            const regCode = CONFIG.deptToRegion[deptCode];
+            if (!regCode) continue;
 
-        // Calcul des min/max pour les échelles
-        for (const [key, val] of rollup) {
-            if (val.production > maxProd) maxProd = val.production;
-            if (val.rentabilite > maxRent) maxRent = val.rentabilite;
-            if (val.rentabilite < minRent && val.rentabilite > 0) minRent = val.rentabilite;
+            if (!regionStats.has(regCode)) {
+                regionStats.set(regCode, { prodSum: 0, rentSum: 0, count: 0 });
+            }
+            const r = regionStats.get(regCode);
+            r.prodSum += stats.production; // Ici on peut faire une somme, les doublons sont partis !
+            r.rentSum += stats.rentabilite;
+            r.count += 1;
+        }
+
+        // 3. Remplir dataMap et calculer les échelles
+        for (const [regCode, stats] of regionStats.entries()) {
+            const rent = stats.count > 0 ? stats.rentSum / stats.count : 0;
+            dataMap.set(regCode, { production: stats.prodSum, rentabilite: rent });
+
+            if (stats.prodSum > maxProd) maxProd = stats.prodSum;
+            if (rent > maxRent) maxRent = rent;
+            if (rent < minRent && rent > 0) minRent = rent;
         }
 
     } else {
@@ -254,25 +273,20 @@ function processGeoData(filteredData) {
             CONFIG.deptToRegion[f.properties.code] === STATE.view.regionCode
         );
         
-        dataMap = new Map(filteredData.map(d => [d.Dep_Code, {
-            production: d.production,
-            rentabilite: d.rend_euro_par_ha
-        }]));
-
-        filteredData.forEach(d => {
-            if (d.production > maxProd) maxProd = d.production;
-            if (d.rend_euro_par_ha > maxRent) maxRent = d.rend_euro_par_ha;
-            if (d.rend_euro_par_ha < minRent && d.rend_euro_par_ha > 0) minRent = d.rend_euro_par_ha;
-        });
+        // On transfère directement les valeurs calculées à l'étape 1
+        for (const [deptCode, stats] of deptAnnualStats.entries()) {
+            if (CONFIG.deptToRegion[deptCode] === STATE.view.regionCode) {
+                dataMap.set(deptCode, stats);
+                if (stats.production > maxProd) maxProd = stats.production;
+                if (stats.rentabilite > maxRent) maxRent = stats.rentabilite;
+                if (stats.rentabilite < minRent && stats.rentabilite > 0) minRent = stats.rentabilite;
+            }
+        }
     }
 
     if (minRent === Infinity) minRent = 0;
 
-    return { 
-        features: geoFeatures, 
-        map: dataMap, 
-        stats: { maxProd, maxRent, minRent } 
-    };
+    return { features: geoFeatures, map: dataMap, stats: { maxProd, maxRent, minRent } };
 }
 
 function calculateScales(stats) {
@@ -320,8 +334,8 @@ function initChartContainer() {
     chartG = chartSvg.append("g")
         .attr("transform", `translate(${chartMargin.left},${chartMargin.top})`);
 
-    // Init échelles
-    xScale = d3.scaleLinear().range([0, w - chartMargin.left - chartMargin.right]);
+    // Dans initChartContainer()
+    xScale = d3.scaleTime().range([0, w - chartMargin.left - chartMargin.right]); // MODIFIÉ
     yScale = d3.scaleLinear().range([h - chartMargin.top - chartMargin.bottom, 0]);
 
     // Axes
@@ -338,41 +352,53 @@ function initChartContainer() {
         updateChart();
     });
 }
-
 function updateChart() {
-    // 1. Préparation des données historiques
-    // On filtre TOUTES les années pour la culture/saison sélectionnée
     let historyData = STATE.data.filter(d => 
         d.culture === STATE.filters.culture && 
         d.Saison === STATE.filters.saison
     );
 
-    // 2. Filtrage Géographique (France, Région ou Département)
     let title = "France";
-    
     if (STATE.chart.targetCode) {
         if (STATE.view.regionCode === null) { 
-            // Si on survole une Région en vue nationale
-            // On agrège tous les départements de cette région
-             historyData = historyData.filter(d => CONFIG.deptToRegion[d.Dep_Code] === STATE.chart.targetCode);
-             title = STATE.chart.targetName; // Nom de la région survolée
+            historyData = historyData.filter(d => CONFIG.deptToRegion[d.Dep_Code] === STATE.chart.targetCode);
         } else {
-            // Si on survole un Département
             historyData = historyData.filter(d => d.Dep_Code === STATE.chart.targetCode);
-            title = STATE.chart.targetName;
         }
+        title = STATE.chart.targetName;
     }
 
-    // 3. Agrégation par Année (Somme pour Prod/Stock, Moyenne pour Rentabilité)
+    // Détecte si on est sur une métrique mensuelle ou annuelle
+    // (J'ai mis 'surface' ou 'stock' selon ce que vous utilisez)
+    const isMonthly = (STATE.chart.metric === 'surface' || STATE.chart.metric === 'stock');
+
+    // Agrégation chronologique
     const nested = d3.rollups(historyData, 
         v => {
-            if (STATE.chart.metric === 'rentabilite') return d3.mean(v, d => d.rend_euro_par_ha);
-            return d3.sum(v, d => d[STATE.chart.metric === 'stock' ? 'stock' : 'production']); 
-        },
-        d => d.Annee
-    ).sort((a, b) => a[0] - b[0]); // Trier par année
+            if (isMonthly) {
+                // MENSUEL : On somme simplement la surface de tous les départements pour CE mois-là
+                return d3.sum(v, d => d.surface || d.stock || 0); 
+            } else {
+                // ANNUEL : On dédoublonne d'abord par département (moyenne), puis on somme/moyenne la zone
+                const parDept = d3.rollup(v,
+                    leaves => ({
+                        prod: d3.mean(leaves, d => d.production),
+                        rent: d3.mean(leaves, d => d.rend_euro_par_ha)
+                    }),
+                    d => d.Dep_Code
+                );
 
-    // Mise à jour Titre
+                if (STATE.chart.metric === 'production') {
+                    return d3.sum(Array.from(parDept.values()), d => d.prod);
+                } else {
+                    return d3.mean(Array.from(parDept.values()), d => d.rent);
+                }
+            }
+        },
+        // Astuce : Création d'une vraie Date. Si c'est annuel, on cale au 1er Janvier.
+        d => isMonthly ? new Date(d.Annee, (d.Mois || 1) - 1, 1) : new Date(d.Annee, 0, 1)
+    ).sort((a, b) => a[0] - b[0]);
+
     d3.select("#chart-title").text(`${title} : Historique ${STATE.chart.metric}`);
 
     if (nested.length === 0) {
@@ -380,29 +406,30 @@ function updateChart() {
         return;
     }
 
-    // 4. Mise à jour Echelles & Axes
     xScale.domain(d3.extent(nested, d => d[0]));
-    yScale.domain([0, d3.max(nested, d => d[1]) * 1.1]); // +10% de marge en haut
+    yScale.domain([0, d3.max(nested, d => d[1]) * 1.1]);
 
     const w = document.getElementById('line-chart').clientWidth;
-    xScale.range([0, w - chartMargin.left - chartMargin.right]); // Réajustement responsive rapide
+    xScale.range([0, w - chartMargin.left - chartMargin.right]);
 
-    chartG.select(".x-axis").transition().call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+    // Formatage de l'axe X : affiche les années, mais comprend les mois
+    chartG.select(".x-axis").transition()
+        .call(d3.axisBottom(xScale).ticks(isMonthly ? d3.timeMonth.every(6) : d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
+    
     chartG.select(".y-axis").transition().call(d3.axisLeft(yScale).ticks(5));
 
-    // 5. Dessin de la ligne
     const line = d3.line()
         .x(d => xScale(d[0]))
         .y(d => yScale(d[1]))
-        .curve(d3.curveMonotoneX); // Courbe lissée
+        .curve(d3.curveMonotoneX);
 
     chartG.select(".line-path")
         .datum(nested)
         .transition().duration(500)
         .attr("d", line)
-        .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : "#27ae60");
+        .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : 
+                        isMonthly ? "#2980b9" : "#27ae60");
 }
-
 // --- RENDERERS ---------------------------------------------------------------
 
 function renderMapLayer(data, scales) {
