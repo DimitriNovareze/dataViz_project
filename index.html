@@ -2,110 +2,58 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Agricole France</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PREVICULTUR - Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="home.css">
 </head>
 <body>
 
-    <div class="dashboard-container">
+    <div class="splash-card">
         
-        <aside class="sidebar">
-            <div class="header">
-                <h1>Rentabilité Agricole</h1>
-                <p>Analyse par Région & Département</p>
-            </div>
+        <header class="splash-header">
+            <h1>PREVICULTUR</h1>
+            <h2>Rentabilité et production agricole en France</h2>
+            <p class="authors">Un projet de Dimitri Novareze & Jean-Joseph Tampé</p>
+        </header>
 
-            <div class="controls">
-                <div class="control-group">
-                    <label>Culture</label>
-                    <select id="select-culture"></select>
-                </div>
-                <div class="control-group">
-                    <label>Saison :</label>
-                    <select id="select-saison"></select> 
-                </div>
-                <div class="control-group">
-                    <label>Année</label>
-                    <select id="select-annee"></select>
-                </div>
-                
-                <div id="breadcrumb" class="hidden">
-                    <button id="btn-back">
-                        <span class="icon">⬅</span> Vue Nationale
-                    </button>
-                    <div id="region-title">France Entière</div>
-                </div>
-            </div>
-            
-            <div class="legend-container">
-    
-            <div class="legend-block">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <label style="margin: 0;">Production</label>
-                    <select id="select-unit" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ccc;">
-                        <option value="tonnes">Tonnes (T / kT)</option>
-                        <option value="eiffel">Tours Eiffel</option>
-                        <option value="pyramid">Pyramides Khéops</option>
-                    </select>
-                </div>
-                <div id="legend-color-gradient" class="legend-bar"></div>
-                <div class="legend-labels">
-                    <span id="legend-prod-min">0</span>
-                    <span id="legend-prod-max">0</span>
-                </div>
-            </div>
-
-           <div class="bar-chart-container" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
-    <label id="bar-chart-title" style="font-size: 0.9rem; font-weight: 500; color: #333;">Comparaison : France</label>
-    <div id="bar-chart" style="height: 180px; width: 100%; margin-top: 10px;"></div>
-</div>
-            <div class="legend-block" style="margin-top: 15px;">
-                <label>Rendement (€/ha)</label>
-                <div id="legend-size-container"></div>
-            </div>
-            
+        <div class="splash-description">
+            <p>Explorez visuellement la dynamique agricole française. Identifiez les régions les plus productives, analysez l'évolution temporelle et comparez la rentabilité des cultures.</p>
         </div>
-        <div class="top-yields-container" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <label style="font-size: 0.9rem; font-weight: 500; color: #333; margin: 0;">Top Rendements</label>
-                    <button id="btn-table-filter" class="btn-small">Culture ciblée</button>
-                </div>
-                <div class="table-wrapper" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px;">
-                    <table id="yield-table" style="width: 100%; font-size: 0.75rem; border-collapse: collapse; background: white;">
-                        <thead style="position: sticky; top: 0; background: #f8f9fa; box-shadow: 0 2px 2px rgba(0,0,0,0.05);">
-                            <tr style="text-align: left;">
-                                <th style="padding: 6px;">Département</th>
-                                <th style="padding: 6px;">Culture</th>
-                                <th style="padding: 6px;">Rend.</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </aside>
 
-        <main class="map-wrapper">
-            <div id="map-container"></div>
-            <div id="chart-panel">
-                <div class="chart-header">
-                    <h3 id="chart-title">Historique : France</h3>
-                    <div class="chart-toggles">
-                        <label><input type="radio" name="metric" value="production" checked> Production</label>
-                        <label><input type="radio" name="metric" value="rentabilite"> Rentabilité</label>
-                        <label><input type="radio" name = "metric" value="stock"> Stock mensuel</label>
-                        </div>
-                </div>
-                <div id="line-chart"></div>
+        <div class="splash-features">
+            <div class="feature-item">
+                <span class="feature-icon">🗺️</span>
+                <h4>Carte Choroplèthe</h4>
+                <p>Analyse Régionale & Départementale</p>
             </div>
-        </main>
+            <div class="feature-item">
+                <span class="feature-icon">📈</span>
+                <h4>Séries Temporelles</h4>
+                <p>Évolution Prod. / Rentabilité / Stocks</p>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📊</span>
+                <h4>Comparateur</h4>
+                <p>Cultures dominantes par zone</p>
+            </div>
+        </div>
+
+        <div class="splash-cta">
+            <a href="dashboard.html" class="btn-launch">Lancer l'application PREVICULTUR</a>
+        </div>
+
+       <footer class="splash-footer">
+            <p>
+                <strong>Sources des données :</strong> 
+                <a href="https://agreste.agriculture.gouv.fr/agreste-web/download/publication/publie/SAA-SeriesLongues/SAA_2010-2024-d%C3%A9finitives_donnees-DepartementalesetRegionales.zip" target="_blank" rel="noopener noreferrer">Agreste (Séries Longues SAA)</a> | 
+                <a href="https://visionet.franceagrimer.fr/Pages/OpenDocument.aspx?fileurl=SeriesChronologiques%2fproductions%20vegetales%2fgrandes%20cultures%2fcollecte%2cstocks%2cd%c3%a9p%c3%b4ts%2fSCR-GRC-histREG_collecte_stock_depuis_2000-C25.zip&telechargersanscomptage=oui" target="_blank" rel="noopener noreferrer">FranceAgriMer (Stocks)</a> | 
+                <a href="#" target="_blank">Cotations (À venir)</a>
+            </p>
+            <p style="margin-top: 5px;">Projet de Data-Visualisation 2024</p>
+        </footer>
 
     </div>
 
-    <div id="tooltip" class="tooltip hidden"></div>
-
-    <script src="script.js"></script>
 </body>
 </html>

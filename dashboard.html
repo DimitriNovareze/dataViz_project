@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Agricole France</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="header">
+                <h1>Rentabilité Agricole</h1>
+                <p>Analyse par Région & Département</p>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Culture</label>
+                    <select id="select-culture"></select>
+                </div>
+                <div class="control-group">
+                    <label>Saison :</label>
+                    <select id="select-saison"></select> 
+                </div>
+                <div class="control-group">
+                    <label>Année</label>
+                    <select id="select-annee"></select>
+                </div>
+                
+                <div id="breadcrumb" class="hidden">
+                    <button id="btn-back">
+                        <span class="icon">⬅</span> Vue Nationale
+                    </button>
+                    <div id="region-title">France Entière</div>
+                </div>
+            </div>
+            
+            <div class="legend-container">
+    
+            <div class="legend-block">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label style="margin: 0;">Production</label>
+                    <select id="select-unit" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="tonnes">Tonnes (T / kT)</option>
+                        <option value="eiffel">Tours Eiffel</option>
+                        <option value="pyramid">Pyramides Khéops</option>
+                    </select>
+                </div>
+                <div id="legend-color-gradient" class="legend-bar"></div>
+                <div class="legend-labels">
+                    <span id="legend-prod-min">0</span>
+                    <span id="legend-prod-max">0</span>
+                </div>
+            </div>
+
+           <div class="bar-chart-container" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
+    <label id="bar-chart-title" style="font-size: 0.9rem; font-weight: 500; color: #333;">Comparaison : France</label>
+    <div id="bar-chart" style="height: 180px; width: 100%; margin-top: 10px;"></div>
+</div>
+            <div class="legend-block" style="margin-top: 15px;">
+                <label>Rendement (€/ha)</label>
+                <div id="legend-size-container"></div>
+            </div>
+            
+        </div>
+        <div class="top-yields-container" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label style="font-size: 0.9rem; font-weight: 500; color: #333; margin: 0;">Top Rendements</label>
+                    <button id="btn-table-filter" class="btn-small">Culture ciblée</button>
+                </div>
+                <div class="table-wrapper" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px;">
+                    <table id="yield-table" style="width: 100%; font-size: 0.75rem; border-collapse: collapse; background: white;">
+                        <thead style="position: sticky; top: 0; background: #f8f9fa; box-shadow: 0 2px 2px rgba(0,0,0,0.05);">
+                            <tr style="text-align: left;">
+                                <th style="padding: 6px;">Département</th>
+                                <th style="padding: 6px;">Culture</th>
+                                <th style="padding: 6px;">Rend.</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </aside>
+
+        <main class="map-wrapper">
+            <div id="map-container"></div>
+            <div id="chart-panel">
+                <div class="chart-header">
+                    <h3 id="chart-title">Historique : France</h3>
+                    <div class="chart-toggles">
+                        <label><input type="radio" name="metric" value="production" checked> Production</label>
+                        <label><input type="radio" name="metric" value="rentabilite"> Rentabilité</label>
+                        <label><input type="radio" name = "metric" value="stock"> Stock mensuel</label>
+                        </div>
+                </div>
+                <div id="line-chart"></div>
+            </div>
+        </main>
+
+    </div>
+
+    <div id="tooltip" class="tooltip hidden"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
