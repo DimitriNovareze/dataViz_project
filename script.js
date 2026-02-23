@@ -214,7 +214,7 @@ function initMenus() {
     btnTableFilter.on("click", function() {
         STATE.table.allCultures = !STATE.table.allCultures;
         if (STATE.table.allCultures) {
-            d3.select(this).classed("active", true).text("✅ Sans Filtres");
+            d3.select(this).classed("active", true).text("Sans Filtres");
         } else {
             d3.select(this).classed("active", false).text("Culture ciblée");
         }
@@ -455,11 +455,6 @@ function calculateScales(stats) {
             ])
     };
 }
-
-
-
-
-
 
 let chartSvg, chartG, xScale, yScale, lineGenerator, xAxis, yAxis;
 const chartMargin = { top: 10, right: 30, bottom: 20, left: 70 };
@@ -984,7 +979,7 @@ function resetZoom() {
 
 
 let barSvg, barG, xBarScale, yBarScale;
-const barMargin = { top: 5, right: 15, bottom: 20, left: 60 };
+const barMargin = { top: 15, right: 45, bottom: 20, left: 60 };
 
 function initBarChart() {
     const container = document.getElementById('bar-chart');
@@ -1007,6 +1002,17 @@ function initBarChart() {
     barG.append("g").attr("class", "x-bar-axis")
         .attr("transform", `translate(0, ${h - barMargin.top - barMargin.bottom})`);
     barG.append("g").attr("class", "y-bar-axis");
+
+    // --- 2. NOUVEAU CODE : Ajout de la légende (Label uniquement) ---
+    barG.append("text")
+        .attr("class", "rent-legend-label")
+        .attr("x", w - barMargin.left - barMargin.right) // Placé tout à droite de la zone de données
+        .attr("y", -5) // Placé juste au-dessus des barres (rendu possible par margin.top = 15)
+        .attr("text-anchor", "end") // Aligné sur la droite pour ne pas déborder
+        .style("font-size", "10px")
+        .style("font-style", "italic")
+        .style("fill", "#e67e22") // Même couleur orange que le trait et le point du lollipop
+        .text("Rentabilité (€/ha)");
 }
 
 
@@ -1113,7 +1119,7 @@ function updateBarChart() {
             .attr("height", yBarScale.bandwidth())
             .attr("x", 0)
             .attr("width", 0)
-            .attr("fill", d => d.culture === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")
+            .attr("fill", d => d.culture === STATE.filters.culture ? "#2cca49" : "#bdc3c7")
             .style("cursor", "pointer")
             .on("click", (event, d) => changeCultureFromBar(d.culture))
             .call(e => e.transition().duration(500).attr("width", d => xBarScale(d.production))),
@@ -1124,7 +1130,7 @@ function updateBarChart() {
                 .attr("y", d => yBarScale(d.culture))
                 .attr("height", yBarScale.bandwidth())
                 .attr("width", d => xBarScale(d.production))
-                .attr("fill", d => d.culture === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")),
+                .attr("fill", d => d.culture === STATE.filters.culture ? "#2cca49" : "#bdc3c7")),
             
         exit => exit.transition().duration(300).attr("width", 0).remove()
     );
@@ -1173,6 +1179,39 @@ function updateBarChart() {
             .attr("cx", d => xRentScale(d.rentabilite))),
             
         exit => exit.transition().duration(300).attr("cx", 0).remove()
+    );
+
+    // 9. NOUVEAU : Dessiner les LABELS DE VALEURS (À droite du point)
+    const rentLabels = barG.selectAll(".rent-label-value").data(statsCulture, d => d.culture);
+
+    rentLabels.join(
+        enter => enter.append("text")
+            .attr("class", "rent-label-value")
+            // Centrage vertical aligné sur le point
+            .attr("y", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("dy", "0.35em") 
+            .attr("x", 0) // Départ à 0 pour l'animation d'entrée
+            .style("fill", "#e67e22") // Couleur assortie au lollipop
+            .style("font-size", "10px")
+            .style("font-weight", "bold")
+            .style("pointer-events", "none") // Les clics passent au travers
+            // Arrondi à la dizaine : 456 -> 460
+            .text(d => Math.round(d.rentabilite / 10) * 10) 
+            .call(e => e.transition().duration(500)
+                // Position finale X : position du point + 10px de marge
+                .attr("x", d => xRentScale(d.rentabilite) + 10) 
+            ),
+            
+        update => update
+            // Mise à jour de la valeur textuelle si les données changent
+            .text(d => Math.round(d.rentabilite / 10) * 10)
+            .call(u => u.transition().duration(500)
+                .attr("y", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+                .attr("x", d => xRentScale(d.rentabilite) + 10)
+            ),
+            
+        // Animation de sortie vers la gauche
+        exit => exit.transition().duration(300).attr("x", 0).remove()
     );
 }
 
