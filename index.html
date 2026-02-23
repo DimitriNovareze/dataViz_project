@@ -59,6 +59,17 @@
 
         <main class="map-wrapper">
             <div id="map-container"></div>
+            <div id="chart-panel">
+                <div class="chart-header">
+                    <h3 id="chart-title">Historique : France</h3>
+                    <div class="chart-toggles">
+                        <label><input type="radio" name="metric" value="production" checked> Production</label>
+                        <label><input type="radio" name="metric" value="rentabilite"> Rentabilité</label>
+                        <label><input type="radio" name = "metric" value="stock"> Stock mensuel</label>
+                        </div>
+                </div>
+                <div id="line-chart"></div>
+            </div>
         </main>
 
     </div>

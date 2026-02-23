@@ -16,7 +16,7 @@ const CONFIG = {
         csv: "saa_stock_price.csv"
     },
     visu: {
-        radiusMin: 2,  // Rayon pixels (Pire rendement)
+        radiusMin: 5,  // Rayon pixels (Pire rendement)
         radiusMax: 15, // Rayon pixels (Meilleur rendement)
         colors: {
             prod: d3.interpolateGreens,
@@ -25,7 +25,7 @@ const CONFIG = {
             mapStroke: "white",
             noData: "#f0f0f0"
         },
-        transitionDuration: 750
+        transitionDuration: 650
     },
     // Mapping Départements -> Régions
     deptToRegion: {
@@ -59,6 +59,12 @@ const STATE = {
     view: {             // État de la vue
         regionCode: null, // null = Vue Nationale
         zoomLevel: 1
+    },
+
+    chart: {
+        metric: 'production', // 'production', 'rentabilite', ou 'stock'
+        targetName: 'France',
+        targetCode: null // null = France, sinon Code Région/Dept
     }
 };
 
@@ -97,9 +103,13 @@ async function initApp() {
             ...d,
             Dep_Code: d.Dep_Code ? d.Dep_Code.toString().padStart(2, '0') : "00",
             Annee: Utils.parseNum(d.Annee),
+            Mois: Utils.parseNum(d.MOIS),
+            
             Saison: d.saison || "Annuel",
             rend_euro_par_ha: Utils.parseNum(d.rend_euro_par_ha),
-            production: Utils.parseNum(d.PROD) // Mapping PROD
+            production: Utils.parseNum(d.PROD),
+            stock: Utils.parseNum(d.STOCKS),
+            Surface: Utils.parseNum(d.SURF),
         }));
 
         STATE.geo.regions = regionsGeo;
@@ -111,6 +121,10 @@ async function initApp() {
 
         // Premier Rendu ///////////////////////////////////////////////////////
         updateEngine();
+
+        // Line Chart
+        initChartContainer();
+        updateChart();
 
     } catch (error) {
         console.error("Erreur critique:", error);
@@ -180,6 +194,11 @@ function initMapContainer() {
 
     g = svg.append("g");
 
+    // CRÉATION DES CALQUES (L'ordre définit ce qui est devant/derrière)
+    g.append("path").attr("id", "map-outline"); // Fond (Contour épais)
+    g.append("g").attr("id", "map-areas");      // Milieu (Régions/Départements)
+    g.append("g").attr("id", "map-symbols");    // Devant (Légendes/Cercles)
+
     projection = d3.geoConicConformal()
         .center([2.454071, 46.279229])
         .scale(3000)
@@ -196,7 +215,7 @@ function updateEngine() {
     const filtered = STATE.data.filter(d => 
         d.culture === STATE.filters.culture && 
         d.Annee === STATE.filters.Annee && 
-        d.Saison === STATE.filters.saison
+        d.Saison === STATE.filters.saison   
     );
 
     // 2. Préparer la géométrie et les stats
@@ -214,27 +233,44 @@ function updateEngine() {
 }
 
 function processGeoData(filteredData) {
-    let geoFeatures, dataMap, maxProd = 0, maxRent = 0, minRent = Infinity;
+    let geoFeatures, dataMap = new Map(), maxProd = 0, maxRent = 0, minRent = Infinity;
+
+    // 1. ÉTAPE CLÉ : Dédoublonner en moyennant les 12 lignes de chaque département
+    const deptAnnualStats = d3.rollup(filteredData, 
+        v => ({
+            production: d3.mean(v, d => d.production), // La moyenne donne la vraie valeur annuelle
+            rentabilite: d3.mean(v, d => d.rend_euro_par_ha)
+        }),
+        d => d.Dep_Code
+    );
 
     if (STATE.view.regionCode === null) {
         // --- VUE NATIONALE ---
         geoFeatures = STATE.geo.regions.features;
         
-        // Agrégation par Région
-        const rollup = d3.rollup(filteredData, 
-            v => ({
-                production: d3.sum(v, d => d.production),
-                rentabilite: d3.mean(v, d => d.rend_euro_par_ha)
-            }),
-            d => CONFIG.deptToRegion[d.Dep_Code]
-        );
-        dataMap = rollup;
+        // 2. Agréger les vraies valeurs départementales par région
+        const regionStats = new Map();
+        for (const [deptCode, stats] of deptAnnualStats.entries()) {
+            const regCode = CONFIG.deptToRegion[deptCode];
+            if (!regCode) continue;
 
-        // Calcul des min/max pour les échelles
-        for (const [key, val] of rollup) {
-            if (val.production > maxProd) maxProd = val.production;
-            if (val.rentabilite > maxRent) maxRent = val.rentabilite;
-            if (val.rentabilite < minRent && val.rentabilite > 0) minRent = val.rentabilite;
+            if (!regionStats.has(regCode)) {
+                regionStats.set(regCode, { prodSum: 0, rentSum: 0, count: 0 });
+            }
+            const r = regionStats.get(regCode);
+            r.prodSum += stats.production; // Ici on peut faire une somme, les doublons sont partis !
+            r.rentSum += stats.rentabilite;
+            r.count += 1;
+        }
+
+        // 3. Remplir dataMap et calculer les échelles
+        for (const [regCode, stats] of regionStats.entries()) {
+            const rent = stats.count > 0 ? stats.rentSum / stats.count : 0;
+            dataMap.set(regCode, { production: stats.prodSum, rentabilite: rent });
+
+            if (stats.prodSum > maxProd) maxProd = stats.prodSum;
+            if (rent > maxRent) maxRent = rent;
+            if (rent < minRent && rent > 0) minRent = rent;
         }
 
     } else {
@@ -243,25 +279,20 @@ function processGeoData(filteredData) {
             CONFIG.deptToRegion[f.properties.code] === STATE.view.regionCode
         );
         
-        dataMap = new Map(filteredData.map(d => [d.Dep_Code, {
-            production: d.production,
-            rentabilite: d.rend_euro_par_ha
-        }]));
-
-        filteredData.forEach(d => {
-            if (d.production > maxProd) maxProd = d.production;
-            if (d.rend_euro_par_ha > maxRent) maxRent = d.rend_euro_par_ha;
-            if (d.rend_euro_par_ha < minRent && d.rend_euro_par_ha > 0) minRent = d.rend_euro_par_ha;
-        });
+        // On transfère directement les valeurs calculées à l'étape 1
+        for (const [deptCode, stats] of deptAnnualStats.entries()) {
+            if (CONFIG.deptToRegion[deptCode] === STATE.view.regionCode) {
+                dataMap.set(deptCode, stats);
+                if (stats.production > maxProd) maxProd = stats.production;
+                if (stats.rentabilite > maxRent) maxRent = stats.rentabilite;
+                if (stats.rentabilite < minRent && stats.rentabilite > 0) minRent = stats.rentabilite;
+            }
+        }
     }
 
     if (minRent === Infinity) minRent = 0;
 
-    return { 
-        features: geoFeatures, 
-        map: dataMap, 
-        stats: { maxProd, maxRent, minRent } 
-    };
+    return { features: geoFeatures, map: dataMap, stats: { maxProd, maxRent, minRent } };
 }
 
 function calculateScales(stats) {
@@ -287,108 +318,385 @@ function calculateScales(stats) {
     };
 }
 
+
+
+
+
+
+let chartSvg, chartG, xScale, yScale, lineGenerator, xAxis, yAxis;
+const chartMargin = { top: 10, right: 30, bottom: 20, left: 70 };
+
+function initChartContainer() {
+    const container = document.getElementById('line-chart');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    
+    // Création SVG unique
+    chartSvg = d3.select("#line-chart").append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", `0 0 ${w} ${h}`);
+        
+    chartG = chartSvg.append("g")
+        .attr("transform", `translate(${chartMargin.left},${chartMargin.top})`);
+
+    // Dans initChartContainer()
+    xScale = d3.scaleTime().range([0, w - chartMargin.left - chartMargin.right]); // MODIFIÉ
+    yScale = d3.scaleLinear().range([h - chartMargin.top - chartMargin.bottom, 0]);
+
+    // Axes
+    chartG.append("g").attr("class", "x-axis")
+        .attr("transform", `translate(0, ${h - chartMargin.top - chartMargin.bottom})`);
+    chartG.append("g").attr("class", "y-axis");
+
+    // Ligne
+    chartG.append("path").attr("class", "line-path");
+
+//TOOLTIP
+
+    const focus = chartG.append("g")
+        .attr("class", "focus")
+        .style("display", "none");
+
+    // Ligne verticale
+    focus.append("line")
+        .attr("class", "focus-line")
+        .attr("y1", 0)
+        .style("stroke", "#999")
+        .style("stroke-width", "1px")
+        .style("stroke-dasharray", "3 3"); // Ligne en pointillés
+
+    // Petit cercle sur la courbe
+    focus.append("circle")
+        .attr("class", "focus-circle")
+        .attr("r", 5)
+        .style("fill", "#fff")
+        .style("stroke", "#333")
+        .style("stroke-width", "2px");
+
+    // Rectangle invisible par-dessus le graphique pour capter la souris
+    chartG.append("rect")
+        .attr("class", "overlay")
+        .style("fill", "none")
+        .style("pointer-events", "all");
+
+
+
+    // Listeners sur les boutons radio
+    d3.selectAll("input[name='metric']").on("change", function() {
+        STATE.chart.metric = this.value;
+        updateChart();
+    });
+}
+function updateChart() {
+    let historyData = STATE.data.filter(d => 
+        d.culture === STATE.filters.culture && 
+        d.Saison === STATE.filters.saison
+    );
+
+    let title = "France";
+    if (STATE.chart.targetCode) {
+        if (STATE.view.regionCode === null) { 
+            historyData = historyData.filter(d => CONFIG.deptToRegion[d.Dep_Code] === STATE.chart.targetCode);
+        } else {
+            historyData = historyData.filter(d => d.Dep_Code === STATE.chart.targetCode);
+        }
+        title = STATE.chart.targetName;
+    }
+
+    // Détecte si on est sur une métrique mensuelle ou annuelle
+    // (J'ai mis 'surface' ou 'stock' selon ce que vous utilisez)
+    const isMonthly = (STATE.chart.metric === 'surface' || STATE.chart.metric === 'stock');
+
+    // Agrégation chronologique
+    const nested = d3.rollups(historyData, 
+        v => {
+            if (isMonthly) {
+                // MENSUEL : On somme simplement la surface de tous les départements pour CE mois-là
+                return d3.sum(v, d => d.surface || d.stock || 0); 
+            } else {
+                // ANNUEL : On dédoublonne d'abord par département (moyenne), puis on somme/moyenne la zone
+                const parDept = d3.rollup(v,
+                    leaves => ({
+                        prod: d3.mean(leaves, d => d.production),
+                        rent: d3.mean(leaves, d => d.rend_euro_par_ha)
+                    }),
+                    d => d.Dep_Code
+                );
+
+                if (STATE.chart.metric === 'production') {
+                    return d3.sum(Array.from(parDept.values()), d => d.prod);
+                } else {
+                    return d3.mean(Array.from(parDept.values()), d => d.rent);
+                }
+            }
+        },
+        // Astuce : Création d'une vraie Date. Si c'est annuel, on cale au 1er Janvier.
+        d => isMonthly ? new Date(d.Annee, (d.Mois || 1) - 1, 1) : new Date(d.Annee, 0, 1)
+    ).sort((a, b) => a[0] - b[0]);
+
+    d3.select("#chart-title").text(`${title} : Historique ${STATE.chart.metric}`);
+
+    if (nested.length === 0) {
+        chartG.select(".line-path").attr("d", null);
+        return;
+    }
+
+    xScale.domain(d3.extent(nested, d => d[0]));
+    yScale.domain([0, d3.max(nested, d => d[1]) * 1.1]);
+
+    const w = document.getElementById('line-chart').clientWidth;
+    xScale.range([0, w - chartMargin.left - chartMargin.right]);
+
+    // Formatage de l'axe X : affiche les années, mais comprend les mois
+    chartG.select(".x-axis").transition()
+        .call(d3.axisBottom(xScale).ticks(isMonthly ? d3.timeMonth.every(6) : d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
+    
+    chartG.select(".y-axis").transition().call(d3.axisLeft(yScale).ticks(5));
+
+    const line = d3.line()
+        .x(d => xScale(d[0]))
+        .y(d => yScale(d[1]))
+        .curve(d3.curveMonotoneX);
+
+    chartG.select(".line-path")
+        .datum(nested)
+        .attr("d", line)
+        .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : 
+                        isMonthly ? "#2980b9" : "#27ae60");
+
+//TOOL TIP
+
+    const innerWidth = document.getElementById('line-chart').clientWidth - chartMargin.left - chartMargin.right;
+    const innerHeight = document.getElementById('line-chart').clientHeight - chartMargin.top - chartMargin.bottom;
+    
+    chartG.select(".overlay")
+        .attr("width", innerWidth)
+        .attr("height", innerHeight);
+        
+    chartG.select(".focus-line").attr("y2", innerHeight);
+
+    // Outil mathématique pour trouver le point le plus proche
+    const bisectDate = d3.bisector(d => d[0]).left;
+
+    // Interactions souris
+    chartG.select(".overlay")
+        .on("mouseover", () => {
+            if (nested.length > 0) {
+                chartG.select(".focus").style("display", null);
+                tooltip.classed("hidden", false);
+            }
+        })
+        .on("mouseout", () => {
+            chartG.select(".focus").style("display", "none");
+            tooltip.classed("hidden", true);
+        })
+        .on("mousemove", (event) => {
+            if (nested.length === 0) return;
+
+            // Déduire la date pointée par la souris sur l'axe X
+            const x0 = xScale.invert(d3.pointer(event)[0]);
+            
+            // Trouver l'index de la donnée la plus proche
+            const i = bisectDate(nested, x0, 1);
+            const d0 = nested[i - 1];
+            const d1 = nested[i];
+            
+            // Choisir le point exact le plus proche (à gauche ou à droite de la souris)
+            let d;
+            if (!d0) d = d1;
+            else if (!d1) d = d0;
+            else d = x0 - d0[0] > d1[0] - x0 ? d1 : d0;
+
+            // Déplacer la ligne verticale et le cercle
+            chartG.select(".focus")
+                .attr("transform", `translate(${xScale(d[0])},0)`);
+            chartG.select(".focus-circle")
+                .attr("cy", yScale(d[1]))
+                .style("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : isMonthly ? "#2980b9" : "#27ae60");
+
+            // Formatage de la date (Année simple ou Mois + Année)
+            const timeStr = isMonthly 
+                ? d[0].toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) 
+                : d[0].getFullYear();
+            
+            // Formatage de la valeur affichée
+            let valStr = "";
+            if (STATE.chart.metric === 'rentabilite') {
+                valStr = Math.round(d[1]).toLocaleString() + " €/ha";
+            } else {
+                valStr = Math.round(d[1]).toLocaleString() + (STATE.chart.metric === 'stock' ? " T" : " T");
+            }
+
+            // Affichage dans le HTML du tooltip (le même qu'on utilise pour la carte !)
+            tooltip.html(`<div style="text-align:center;">
+                            <strong>${timeStr}</strong><br/>
+                            <span style="font-size:1.1em; color:#FFD700">${valStr}</span>
+                          </div>`)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 30) + "px");
+        });
+}
+
+
+
+
 // --- RENDERERS ---------------------------------------------------------------
 
 function renderMapLayer(data, scales) {
-    const paths = g.selectAll("path.map-area")
+    g.select("#map-outline")
+        .datum({type: "FeatureCollection", features: data.features})
+        .attr("class", "map-outline")
+        .attr("d", path);
+
+    const paths = g.select("#map-areas").selectAll("path.map-area")
         .data(data.features, d => d.properties.code);
 
     paths.join(
         enter => enter.append("path")
             .attr("class", "map-area")
             .attr("d", path)
-            .attr("stroke", CONFIG.visu.colors.mapStroke)
-            .attr("stroke-width", (0.5 / STATE.view.zoomLevel) + "px")
-            .attr("fill", CONFIG.visu.colors.mapFill)
+            // LIGNE AJOUTÉE : On force la couleur de départ à blanc (ou couleur vide)
+            .attr("fill", "#ffffff") 
+            .style("opacity", 0) 
             .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
+                .style("opacity", 1) 
                 .attr("fill", d => getFillColor(d, data.map, scales.color))),
         
-        update => update.call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+        update => update
             .attr("d", path)
-            .attr("stroke-width", (0.5 / STATE.view.zoomLevel) + "px")
-            .attr("fill", d => getFillColor(d, data.map, scales.color))),
-        
-        exit => exit.remove()
+            .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+                .attr("fill", d => getFillColor(d, data.map, scales.color))),
+            
+        exit => exit.remove() 
     )
     .on("click", (e, d) => handleZoom(d))
-    .on("mousemove", (e, d) => showTooltip(e, d, data.map, scales))
-    .on("mouseout", () => tooltip.classed("hidden", true));
+    .on("mousemove", (e, d) => {
+        showTooltip(e, d, data.map, scales);
+        if (STATE.chart.targetCode !== d.properties.code) {
+            STATE.chart.targetCode = d.properties.code;
+            STATE.chart.targetName = d.properties.nom;
+            updateChart();
+        }
+    })
+    .on("mouseout", () => {
+        tooltip.classed("hidden", true);
+    });
 }
 
 function renderSymbolsLayer(data, scales) {
-    const stars = g.selectAll("path.star")
+    const stars = g.select("#map-symbols").selectAll("path.star")
         .data(data.features, d => d.properties.code);
 
     stars.join(
+        // 1. APPARITION (Enter)
         enter => enter.append("path")
             .attr("class", "star")
-            .attr("transform", d => Utils.getCentroidStr(path, d, 0))
-            .attr("d", circleSymbol.size(0)) // Départ invisible
+            // On dessine la taille et on place au bon endroit INSTANTANÉMENT
+            .attr("d", d => getStarPath(d, data.map, scales.radius))
+            .attr("transform", d => Utils.getCentroidStr(path, d, 1)) 
             .style("stroke", "#333")
             .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
-            .call(e => e.transition().duration(CONFIG.visu.transitionDuration).delay(100)
-                .style("fill", d => getStarColor(d, data.map, scales.starColor))
-                .attr("d", d => getStarPath(d, data.map, scales.radius))
-                .attr("transform", d => Utils.getCentroidStr(path, d, 1))),
-        
-        update => update.call(u => u.transition().duration(CONFIG.visu.transitionDuration)
             .style("fill", d => getStarColor(d, data.map, scales.starColor))
-            .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
+            .style("opacity", 0) // Départ invisible
+            // Seule l'opacité est animée
+            .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
+                .style("opacity", 1)), 
+        
+        // 2. MISE À JOUR (Update)
+        update => update
+            // On met à jour la position et la taille INSTANTANÉMENT
+            .attr("transform", d => Utils.getCentroidStr(path, d, 1))
             .attr("d", d => getStarPath(d, data.map, scales.radius))
-            .attr("transform", d => Utils.getCentroidStr(path, d, 1))),
+            .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
+            // On anime uniquement le changement de couleur éventuel
+            .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+                .style("fill", d => getStarColor(d, data.map, scales.starColor))
+                .style("opacity", 1)),
 
-        exit => exit.transition().duration(200)
-            .attr("transform", d => Utils.getCentroidStr(path, d, 0))
-            .remove()
+        // 3. DISPARITION (Exit)
+        exit => exit.call(ex => ex.transition().duration(200)
+            // On baisse l'opacité à 0 avant de supprimer l'élément du DOM
+            .style("opacity", 0) 
+            .remove())
     );
 }
 
 function renderLegends(stats, scales) {
-    // 1. Légende Couleur (Production)
+    // =========================================================
+    // 1. Légende Couleur (Production) - INCHANGÉE
+    // =========================================================
     const fmtProd = stats.maxProd > 1000 ? (stats.maxProd/1000).toFixed(1)+" kT" : Math.round(stats.maxProd)+" T";
     d3.select("#legend-prod-min").text("0");
     d3.select("#legend-prod-max").text(fmtProd);
 
-    // 2. Légende Taille (Rendement) - SVG
+    // =========================================================
+    // 2. Légende Taille (Rendement) - CERCLES TANGENTS
+    // =========================================================
     const container = d3.select("#legend-size-container");
     container.html(""); // Reset
 
     if(stats.maxRent === 0) return;
 
-    const legSvg = container.append("svg").attr("width", 200).attr("height", 60);
+    // Dimensions adaptées pour laisser la place aux lignes et textes à droite
+    const svgWidth = 150;
+    const svgHeight = 70;
+    const legSvg = container.append("svg").attr("width", svgWidth).attr("height", svgHeight);
     
-    // Valeurs à afficher (Min, Moyenne, Max)
-    const values = [stats.minRent, (stats.minRent + stats.maxRent)/2, stats.maxRent];
-    const labels = ["Min", "Moy", "Max"];
+    // ÉTAPE 1 : Tri décroissant des valeurs à afficher (Max d'abord, Min à la fin)
+    const values = [stats.maxRent, (stats.minRent + stats.maxRent)/2, stats.minRent];
     
-    // Rayons *sans* la division du zoom pour la légende (taille "base")
-    // Note: Pour la légende, on veut montrer la taille relative visuelle "idéale"
-    // ou la taille à l'écran. Ici on montre la taille 2px -> 15px.
+    // Échelle des rayons (taille visuelle fixe pour la légende)
     const legScale = d3.scaleSqrt()
         .domain([stats.minRent, stats.maxRent])
         .range([CONFIG.visu.radiusMin, CONFIG.visu.radiusMax]);
 
-    let xPos = 30;
-    values.forEach((val, i) => {
-        const r = legScale(val);
-        // Cercle ou Étoile
-        legSvg.append("path")
-            .attr("d", d3.symbol().type(d3.symbolStar).size(Math.PI * r * r)())
-            .attr("transform", `translate(${xPos}, 30)`)
-            .style("fill", scales.starColor(val))
-            .style("stroke", "#333");
-            
-        // Texte
-        legSvg.append("text")
-            .attr("x", xPos)
-            .attr("y", 55)
-            .attr("text-anchor", "middle")
-            .style("font-size", "10px")
-            .style("fill", "#333")
-            .text(Math.round(val));
+    // ÉTAPE 2 : Définition des repères géométriques
+    const cx = 40; // Centre X des cercles (décalé à gauche)
+    const bottomY = svgHeight - 10; // Point de tangence bas commun
 
-        xPos += 60; // Espacement
-    });
+    // Calque 1 : Les cercles
+    legSvg.selectAll("circle.legend-circle")
+        .data(values)
+        .enter()
+        .append("circle")
+        .attr("class", "legend-circle")
+        .attr("cx", cx)
+        // Application du principe géométrique : on soustrait le rayon à la ligne de base
+        .attr("cy", d => bottomY - legScale(d)) 
+        .attr("r", d => legScale(d))
+        // Intérieur transparent pour ne pas cacher les cercles inférieurs
+        .style("fill", "transparent") 
+        // On conserve la couleur de l'échelle (jaune -> orange) sur le contour
+        .style("stroke", d => scales.starColor(d)) 
+        .style("stroke-width", "1.5px");
+
+    // Calque 2 : Les lignes en pointillé
+    legSvg.selectAll("line.legend-line")
+        .data(values)
+        .enter()
+        .append("line")
+        .attr("class", "legend-line")
+        .attr("x1", cx)
+        // Départ au sommet du cercle (Ligne de base - diamètre)
+        .attr("y1", d => bottomY - (legScale(d) * 2)) 
+        .attr("x2", cx + CONFIG.visu.radiusMax + 15) // Déport vers la droite
+        .attr("y2", d => bottomY - (legScale(d) * 2))
+        .style("stroke", "#888")
+        .style("stroke-dasharray", "2,2")
+        .style("stroke-width", "1px");
+
+    // Calque 3 : Les étiquettes (Textes)
+    legSvg.selectAll("text.legend-text")
+        .data(values)
+        .enter()
+        .append("text")
+        .attr("class", "legend-text")
+        .attr("x", cx + CONFIG.visu.radiusMax + 20) // Positionné juste après la ligne
+        .attr("y", d => bottomY - (legScale(d) * 2) + 4) // +4px pour centrer le texte avec la ligne
+        .text(d => Math.round(d) + " €")
+        .style("font-size", "10px")
+        .style("fill", "#555");
 }
 
 // --- HELPERS DE RENDU --------------------------------------------------------
