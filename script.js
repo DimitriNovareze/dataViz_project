@@ -119,12 +119,18 @@ async function initApp() {
         initMenus();
         initMapContainer();
 
+          // Line Chart
+        initChartContainer();
+        updateChart();
+
+        initBarChart();
+        updateBarChart();
+
+
         // Premier Rendu ///////////////////////////////////////////////////////
         updateEngine();
 
-        // Line Chart
-        initChartContainer();
-        updateChart();
+      
 
     } catch (error) {
         console.error("Erreur critique:", error);
@@ -194,15 +200,19 @@ function initMapContainer() {
 
     g = svg.append("g");
 
-    // CRÉATION DES CALQUES (L'ordre définit ce qui est devant/derrière)
-    g.append("path").attr("id", "map-outline"); // Fond (Contour épais)
-    g.append("g").attr("id", "map-areas");      // Milieu (Régions/Départements)
-    g.append("g").attr("id", "map-symbols");    // Devant (Légendes/Cercles)
+    // CRÉATION DES CALQUES
+    g.append("path").attr("id", "map-outline"); 
+    g.append("g").attr("id", "map-areas");      
+    g.append("g").attr("id", "map-symbols");    
 
-    projection = d3.geoConicConformal()
-        .center([2.454071, 46.279229])
-        .scale(3000)
-        .translate([w / 2, h / 2]);
+    // 👇 NOUVEAU CODE ICI 👇
+    projection = d3.geoConicConformal();
+    
+    // fitSize demande à D3 de centrer et zoomer parfaitement la France dans l'espace (w, h)
+    // On ajoute un petit padding (ex: marge de 30px) pour que ça ne touche pas les bords
+    const padding = 30;
+    projection.fitExtent([[padding, padding], [w - padding, h - padding]], STATE.geo.regions);
+    // 👆 FIN DU NOUVEAU CODE 👆
 
     path = d3.geoPath().projection(projection);
     tooltip = d3.select("#tooltip");
@@ -230,6 +240,9 @@ function updateEngine() {
     
     // 5. Mettre à jour les légendes
     renderLegends(processed.stats, scales);
+
+    updateChart();
+    updateBarChart();
 }
 function processGeoData(filteredData) {
     let geoFeatures, dataMap = new Map(), maxProd = 0, maxRent = 0, minRent = Infinity;
@@ -577,6 +590,7 @@ function renderMapLayer(data, scales) {
             STATE.chart.targetCode = d.properties.code;
             STATE.chart.targetName = d.properties.nom;
             updateChart();
+            updateBarChart();
         }
     })
     .on("mouseout", () => {
@@ -775,6 +789,134 @@ function resetZoom() {
         .on("end", updateEngine);
         
     d3.select("#breadcrumb").classed("hidden", true);
+}
+
+
+
+let barSvg, barG, xBarScale, yBarScale;
+const barMargin = { top: 5, right: 15, bottom: 20, left: 60 };
+
+function initBarChart() {
+    const container = document.getElementById('bar-chart');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    barSvg = d3.select("#bar-chart").append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", `0 0 ${w} ${h}`);
+
+    barG = barSvg.append("g")
+        .attr("transform", `translate(${barMargin.left},${barMargin.top})`);
+
+    // Échelles
+    xBarScale = d3.scaleLinear().range([0, w - barMargin.left - barMargin.right]);
+    yBarScale = d3.scaleBand().range([0, h - barMargin.top - barMargin.bottom]).padding(0.2);
+
+    // Axes
+    barG.append("g").attr("class", "x-bar-axis")
+        .attr("transform", `translate(0, ${h - barMargin.top - barMargin.bottom})`);
+    barG.append("g").attr("class", "y-bar-axis");
+}
+
+
+function changeCultureFromBar(nouvelleCulture) {
+    if (STATE.filters.culture === nouvelleCulture) return; // Ne rien faire si c'est déjà cliqué
+
+    // 1. Mettre à jour l'état global
+    STATE.filters.culture = nouvelleCulture;
+
+    // 2. Mettre à jour le menu déroulant (Interface)
+    d3.select("#select-culture").property("value", nouvelleCulture);
+
+    // 3. Relancer tout le calcul (Carte + Courbe + Histogramme)
+    updateEngine();
+}
+
+
+function updateBarChart() {
+    // 1. Filtrer les données (Même Année, Même Saison, mais TOUTES LES CULTURES)
+    let bData = STATE.data.filter(d => 
+        d.Annee === STATE.filters.Annee && 
+        d.Saison === STATE.filters.saison
+    );
+
+    // 2. Filtrage Géographique (France, Région survolée, ou Dépt survolé)
+    let title = "France"; // Titre par défaut
+    
+    if (STATE.chart.targetCode) {
+        if (STATE.view.regionCode === null) {
+            bData = bData.filter(d => CONFIG.deptToRegion[d.Dep_Code] === STATE.chart.targetCode);
+        } else {
+            bData = bData.filter(d => d.Dep_Code === STATE.chart.targetCode);
+        }
+        // On récupère le nom de la zone survolée stocké dans le STATE
+        title = STATE.chart.targetName; 
+    }
+
+    d3.select("#bar-chart-title").text(`Comparaison : ${title}`);
+
+    // 3. Agréger la PRODUCTION par Culture (en dédoublonnant les mois)
+    const statsCulture = d3.rollups(bData, 
+        v => {
+            // Dédoublonnage : on prend la moyenne par département d'abord
+            const parDept = d3.rollup(v, leaves => d3.mean(leaves, d => d.production), d => d.Dep_Code);
+            // Puis on somme les départements pour avoir le total
+            return d3.sum(Array.from(parDept.values()));
+        },
+        d => d.culture
+    ).sort((a, b) => b[1] - a[1]) // Trier du plus grand au plus petit
+     .slice(0, 5); // Ne garder que le Top 5 pour que ce soit lisible
+
+    // 4. Mettre à jour les échelles
+    const innerWidth = document.getElementById('bar-chart').clientWidth - barMargin.left - barMargin.right;
+    xBarScale.domain([0, d3.max(statsCulture, d => d[1]) || 1]).range([0, innerWidth]);
+    yBarScale.domain(statsCulture.map(d => d[0]));
+
+    barG.select(".x-bar-axis").transition().duration(500).call(
+        d3.axisBottom(xBarScale).ticks(3).tickFormat(d => {
+            if (d >= 1000000) return (d / 1000000).toFixed(1) + "M";
+            if (d >= 1000) return (d / 1000).toFixed(1) + "k";
+            return d;
+        })
+    );
+    
+    // On dessine l'axe Y
+    barG.select(".y-bar-axis").transition().duration(500).call(d3.axisLeft(yBarScale));
+    
+    // On rend le texte de l'axe Y cliquable
+    barG.select(".y-bar-axis").selectAll("text")
+        .style("font-size", "10px")
+        .style("cursor", "pointer") // Curseur "main"
+        .style("font-weight", d => d === STATE.filters.culture ? "bold" : "normal")
+        .on("click", (event, d) => changeCultureFromBar(d)); // Clic sur le texte
+
+    // 6. Dessiner les barres
+    const bars = barG.selectAll(".bar").data(statsCulture, d => d[0]);
+
+    bars.join(
+        enter => enter.append("rect")
+            .attr("class", "bar")
+            .attr("y", d => yBarScale(d[0]))
+            .attr("height", yBarScale.bandwidth())
+            .attr("x", 0)
+            .attr("width", 0)
+            .attr("fill", d => d[0] === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")
+            .style("cursor", "pointer") // Curseur "main"
+            .on("click", (event, d) => changeCultureFromBar(d[0])) // Clic sur la barre
+            .call(e => e.transition().duration(500).attr("width", d => xBarScale(d[1]))),
+        
+        update => update
+            .style("cursor", "pointer")
+            .on("click", (event, d) => changeCultureFromBar(d[0]))
+            .call(u => u.transition().duration(500)
+                .attr("y", d => yBarScale(d[0]))
+                .attr("height", yBarScale.bandwidth())
+                .attr("width", d => xBarScale(d[1]))
+                .attr("fill", d => d[0] === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")),
+            
+        exit => exit.transition().duration(300).attr("width", 0).remove()
+    );
 }
 
 // Lancement de l'application
