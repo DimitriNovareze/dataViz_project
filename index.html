@@ -40,21 +40,29 @@
             </div>
             
             <div class="legend-container">
-                <div class="legend-block">
-                    <label>Production (Tonnes)</label>
-                    <div id="legend-color-gradient" class="legend-bar"></div>
-                    <div class="legend-labels">
-                        <span id="legend-prod-min">0 T</span>
-                        <span id="legend-prod-max">0 T</span>
-                    </div>
+    
+            <div class="legend-block">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label style="margin: 0;">Production</label>
+                    <select id="select-unit" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="tonnes">Tonnes (T / kT)</option>
+                        <option value="eiffel">Tours Eiffel</option>
+                        <option value="pyramid">Pyramides Khéops</option>
+                    </select>
                 </div>
-
-                <div class="legend-block" style="margin-top: 15px;">
-                    <label>Rendement (€/ha)</label>
-                    <div id="legend-size-container">
-                        </div>
+                <div id="legend-color-gradient" class="legend-bar"></div>
+                <div class="legend-labels">
+                    <span id="legend-prod-min">0</span>
+                    <span id="legend-prod-max">0</span>
                 </div>
             </div>
+
+            <div class="legend-block" style="margin-top: 15px;">
+                <label>Rendement (€/ha)</label>
+                <div id="legend-size-container"></div>
+            </div>
+            
+        </div>
         </aside>
 
         <main class="map-wrapper">

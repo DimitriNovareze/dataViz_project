@@ -56,9 +56,10 @@ const STATE = {
         annee: null,
         saison: null
     },
-    view: {             // État de la vue
-        regionCode: null, // null = Vue Nationale
-        zoomLevel: 1
+    view: {             
+        regionCode: null, 
+        zoomLevel: 1,
+        prodUnit: 'tonnes' // NOUVEAU : Unité par défaut
     },
 
     chart: {
@@ -86,6 +87,24 @@ const Utils = {
         return scaleCheck === 0 
             ? `translate(${center[0]}, ${center[1]}) scale(0)` 
             : `translate(${center[0]}, ${center[1]})`;
+    }
+};
+function formatProduction(tonnes, isShort = false) {
+    const unit = STATE.view.prodUnit;
+    
+    if (unit === 'eiffel') {
+        const eiffels = tonnes / 10100;
+        // On affiche plus de décimales si le chiffre est tout petit
+        return (eiffels < 0.1 && eiffels > 0 ? eiffels.toFixed(3) : eiffels.toFixed(1)) + " 🗼";
+    } 
+    else if (unit === 'pyramid') {
+        const pyr = tonnes / 5750000;
+        return (pyr < 0.1 && pyr > 0 ? pyr.toFixed(4) : pyr.toFixed(2)) + " 🔺";
+    } 
+    else {
+        // Mode classique (Tonnes)
+        if (isShort && tonnes >= 1000) return (tonnes / 1000).toFixed(1) + " kT";
+        return Math.round(tonnes).toLocaleString() + " T";
     }
 };
 
@@ -172,6 +191,14 @@ function initMenus() {
     STATE.filters.saison = selSaison.property("value");
 
     d3.select("#btn-back").on("click", resetZoom);
+    // --- NOUVEAU : Gestion du changement d'unité ---
+    const selUnit = d3.select("#select-unit");
+    selUnit.on("change", () => {
+        STATE.view.prodUnit = selUnit.property("value");
+        updateEngine(); // Relance le calcul pour mettre à jour la légende
+        // Si on a un graphique affiché, on force aussi la mise à jour des labels
+        updateChart(); 
+    });
 }
 
 // =============================================================================
@@ -524,8 +551,11 @@ function updateChart() {
             let valStr = "";
             if (STATE.chart.metric === 'rentabilite') {
                 valStr = Math.round(d[1]).toLocaleString() + " €/ha";
+            } else if (STATE.chart.metric === 'production') {
+                valStr = formatProduction(d[1]); // Utilise notre nouvelle fonction
             } else {
-                valStr = Math.round(d[1]).toLocaleString() + (STATE.chart.metric === 'stock' ? " T" : " T");
+                // Pour le stock, on garde en Tonnes
+                valStr = Math.round(d[1]).toLocaleString() + " T"; 
             }
 
             // Affichage dans le HTML du tooltip (le même qu'on utilise pour la carte !)
@@ -585,40 +615,91 @@ function renderMapLayer(data, scales) {
 }
 
 function renderSymbolsLayer(data, scales) {
-    const stars = g.select("#map-symbols").selectAll("path.star")
+    // Sélection des groupes (au lieu des simples paths)
+    const nodes = g.select("#map-symbols").selectAll("g.symbol-node")
         .data(data.features, d => d.properties.code);
 
-    stars.join(
-        // 1. APPARITION (Enter)
-        enter => enter.append("path")
-            .attr("class", "star")
-            // On dessine la taille et on place au bon endroit INSTANTANÉMENT
-            .attr("d", d => getStarPath(d, data.map, scales.radius))
-            .attr("transform", d => Utils.getCentroidStr(path, d, 1)) 
-            .style("stroke", "#333")
-            .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
-            .style("fill", d => getStarColor(d, data.map, scales.starColor))
-            .style("opacity", 0) // Départ invisible
-            // Seule l'opacité est animée
-            .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
-                .style("opacity", 1)), 
-        
-        // 2. MISE À JOUR (Update)
-        update => update
-            // On met à jour la position et la taille INSTANTANÉMENT
-            .attr("transform", d => Utils.getCentroidStr(path, d, 1))
-            .attr("d", d => getStarPath(d, data.map, scales.radius))
-            .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
-            // On anime uniquement le changement de couleur éventuel
-            .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
-                .style("fill", d => getStarColor(d, data.map, scales.starColor))
-                .style("opacity", 1)),
+    // ==========================================
+    // 1. APPARITION (Enter)
+    // ==========================================
+    const nodesEnter = nodes.enter().append("g")
+        .attr("class", "symbol-node")
+        .attr("transform", d => Utils.getCentroidStr(path, d, 1))
+        .style("opacity", 0);
 
-        // 3. DISPARITION (Exit)
-        exit => exit.call(ex => ex.transition().duration(200)
-            // On baisse l'opacité à 0 avant de supprimer l'élément du DOM
-            .style("opacity", 0) 
-            .remove())
+    nodesEnter.call(e => e.transition().duration(CONFIG.visu.transitionDuration).style("opacity", 1));
+
+    // Ajout du cercle dans le groupe
+    nodesEnter.append("path")
+        .attr("class", "star")
+        .style("stroke", "#333");
+
+    // Ajout du texte (Label) dans le groupe
+    nodesEnter.append("text")
+        .attr("class", "yield-label")
+        .attr("text-anchor", "middle") // Centre le texte horizontalement
+        .style("fill", "#111")
+        .style("font-family", "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif")
+        .style("font-weight", "bold")
+        .style("pointer-events", "none") // Empêche le texte de bloquer le hover de la carte
+        // Effet "Halo" pour garantir la lisibilité même si ça déborde sur une ligne de frontière
+        .style("paint-order", "stroke")
+        .style("stroke", "rgba(255, 255, 255, 0.99)")
+        .style("stroke-linecap", "round")
+        .style("stroke-linejoin", "round");
+
+    // ==========================================
+    // 2. MISE À JOUR (Update + Enter)
+    // ==========================================
+    const nodesUpdate = nodesEnter.merge(nodes);
+
+    // Mise à jour de la position du groupe
+    nodesUpdate.attr("transform", d => Utils.getCentroidStr(path, d, 1));
+
+    // Mise à jour du cercle
+    nodesUpdate.select("path.star")
+        .attr("d", d => getStarPath(d, data.map, scales.radius))
+        .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
+        .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+            .style("fill", d => getStarColor(d, data.map, scales.starColor))
+        );
+
+    // Mise à jour dynamique du texte
+    nodesUpdate.select("text.yield-label")
+        .text(d => {
+            const val = data.map.get(d.properties.code);
+            // On affiche uniquement si la rentabilité existe et on arrondit à l'unité
+            return (val && val.rentabilite > 0) ? Math.round(val.rentabilite) : "";
+        })
+        // La taille du texte et du halo s'adapte à l'inverse du niveau de zoom
+        .style("font-size", (10 / STATE.view.zoomLevel) + "px")
+        .style("stroke-width", (1.5 / STATE.view.zoomLevel) + "px")
+        .attr("dy", d => {
+            const val = data.map.get(d.properties.code);
+            if (!val || val.rentabilite <= 0) return 0;
+
+            const r = scales.radius(val.rentabilite);
+            const str = Math.round(val.rentabilite).toString();
+            
+            // Évaluation de l'espace: ~6px de large par caractère (ajusté au zoom)
+            const estimatedTextWidth = str.length * (6 / STATE.view.zoomLevel);
+            
+            // Règle de décision : Le diamètre (r*2) est-il plus large que le texte ?
+            if ((r * 2) > estimatedTextWidth + (4 / STATE.view.zoomLevel)) {
+                // Rentre dans le cercle : Centrage vertical
+                return "0.35em"; 
+            } else {
+                // Ne rentre pas : Placement sous le cercle avec une petite marge
+                return (r + (12 / STATE.view.zoomLevel)); 
+            }
+        });
+
+    // ==========================================
+    // 3. DISPARITION (Exit)
+    // ==========================================
+    nodes.exit().call(ex => ex.transition().duration(200)
+        .style("opacity", 0)
+        .remove()
     );
 }
 
@@ -626,7 +707,7 @@ function renderLegends(stats, scales) {
     // =========================================================
     // 1. Légende Couleur (Production) - INCHANGÉE
     // =========================================================
-    const fmtProd = stats.maxProd > 1000 ? (stats.maxProd/1000).toFixed(1)+" kT" : Math.round(stats.maxProd)+" T";
+    const fmtProd = formatProduction(stats.maxProd, true);
     d3.select("#legend-prod-min").text("0");
     d3.select("#legend-prod-max").text(fmtProd);
 
@@ -725,7 +806,8 @@ function showTooltip(event, d, map, scales) {
     let html = `<strong>${d.properties.nom}</strong>`;
     
     if (val && (val.production > 0 || val.rentabilite > 0)) {
-        html += `<br><span style="color:#2ecc71">█</span> Prod: ${Math.round(val.production).toLocaleString()} T`;
+        // Remplacez : html += `<br><span style="color:#2ecc71">█</span> Prod: ${Math.round(val.production).toLocaleString()} T`;
+        html += `<br><span style="color:#2ecc71">█</span> Prod: ${formatProduction(val.production)}`;
         html += `<br><span style="color:${scales.starColor(val.rentabilite)}">★</span> Rent: ${Math.round(val.rentabilite)} €/ha`;
     } else {
         html += `<br><em>Pas de données</em>`;
