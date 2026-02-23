@@ -61,6 +61,10 @@ const STATE = {
         zoomLevel: 1
     },
 
+    table: {
+        allCultures: false // Par défaut, on filtre selon la culture globale
+    },
+
     chart: {
         metric: 'production', // 'production', 'rentabilite', ou 'stock'
         targetName: 'France',
@@ -204,6 +208,18 @@ function initMenus() {
         // Si on a un graphique affiché, on force aussi la mise à jour des labels
         updateChart(); 
     });
+
+    // Gestion du bouton "Sans Filtres" du tableau
+    const btnTableFilter = d3.select("#btn-table-filter");
+    btnTableFilter.on("click", function() {
+        STATE.table.allCultures = !STATE.table.allCultures;
+        if (STATE.table.allCultures) {
+            d3.select(this).classed("active", true).text("✅ Sans Filtres");
+        } else {
+            d3.select(this).classed("active", false).text("Culture ciblée");
+        }
+        updateTable(); // On met à jour QUE le tableau, pas la carte entière
+    });
 }
 
 // =============================================================================
@@ -236,13 +252,95 @@ function initMapContainer() {
     
     // fitSize demande à D3 de centrer et zoomer parfaitement la France dans l'espace (w, h)
     // On ajoute un petit padding (ex: marge de 30px) pour que ça ne touche pas les bords
-    const padding = 30;
-    projection.fitExtent([[padding, padding], [w - padding, h - padding]], STATE.geo.regions);
-    // 👆 FIN DU NOUVEAU CODE 👆
+    const padTop = 30;
+    const padBottom = 30;
+    const padLeft = 30;
+    const padRight = 360; // 320px (Légende) + 20px (Marge droite) + 20px (Espace visuel)
+
+    // On force D3 à dessiner la carte dans cette zone restreinte
+    projection.fitExtent(
+        [[padLeft, padTop], [w - padRight, h - padBottom]], 
+        STATE.geo.regions
+    );
 
     path = d3.geoPath().projection(projection);
     tooltip = d3.select("#tooltip");
     circleSymbol = d3.symbol().type(d3.symbolCircle);
+}
+
+// =============================================================================
+// 6. TABLEAU DES MEILLEURS RENDEMENTS
+// =============================================================================
+function updateTable() {
+    // 1. Filtre temporel de base (Année et Saison)
+    let tData = STATE.data.filter(d => 
+        d.Annee === STATE.filters.Annee && 
+        d.Saison === STATE.filters.saison
+    );
+
+    // 2. Filtre de culture conditionnel (Bouton "Sans Filtre")
+    if (!STATE.table.allCultures) {
+        tData = tData.filter(d => d.culture === STATE.filters.culture);
+    }
+
+    // 3. Calcul de la moyenne par Département et par Culture
+    // Cela nous donne une structure Map(Dep_Code -> Map(Culture -> Moyenne Rendement))
+    const deptStats = d3.rollup(tData,
+        v => d3.mean(v, d => d.rend_euro_par_ha),
+        d => d.Dep_Code,
+        d => d.culture
+    );
+
+    // 4. Aplatissement des données pour le tableau
+    let flatData = [];
+    
+    // On boucle directement sur les départements
+    for (const [deptCode, cultures] of deptStats.entries()) {
+        
+        // Recherche du nom du département dans les données géographiques
+        const feature = STATE.geo.depts.features.find(f => f.properties.code === deptCode);
+        // Fallback sécurisé au cas où un code n'a pas de correspondance GeoJSON
+        const deptName = feature ? feature.properties.nom : `Dépt ${deptCode}`;
+
+        for (const [culture, avgRent] of cultures.entries()) {
+            if (avgRent > 0) {
+                flatData.push({ 
+                    departement: deptName, 
+                    culture: culture, 
+                    rent: avgRent 
+                });
+            }
+        }
+    }
+
+    // 5. Tri décroissant et limitation au Top 15
+    flatData.sort((a, b) => b.rent - a.rent);
+    const topData = flatData.slice(0, 15);
+
+    // 6. Rendu dans le DOM avec le pattern D3 (Join)
+    const tbody = d3.select("#yield-table tbody");
+    // La clé d'identification combine les 3 données pour forcer l'animation si une valeur change
+    const rows = tbody.selectAll("tr").data(topData, d => d.departement + d.culture + d.rent);
+
+    rows.join(
+        enter => {
+            const tr = enter.append("tr").style("opacity", 0);
+            tr.append("td").text(d => d.departement).style("font-weight", "500");
+            tr.append("td").text(d => d.culture);
+            tr.append("td").text(d => Math.round(d.rent) + " €")
+              .style("color", "#27ae60").style("font-weight", "bold");
+            
+            tr.transition().duration(400).style("opacity", 1);
+            return tr;
+        },
+        update => {
+            update.select("td:nth-child(1)").text(d => d.departement);
+            update.select("td:nth-child(2)").text(d => d.culture);
+            update.select("td:nth-child(3)").text(d => Math.round(d.rent) + " €");
+            return update;
+        },
+        exit => exit.remove()
+    );
 }
 
 // Fonction centrale qui orchestre tout
@@ -269,7 +367,9 @@ function updateEngine() {
 
     updateChart();
     updateBarChart();
+    updateTable();
 }
+
 function processGeoData(filteredData) {
     let geoFeatures, dataMap = new Map(), maxProd = 0, maxRent = 0, minRent = Infinity;
 
@@ -836,18 +936,30 @@ function handleZoom(feature) {
     if (STATE.view.regionCode === null) {
         STATE.view.regionCode = feature.properties.code;
         
-        // Calcul Bounding Box
+        // Calcul Bounding Box de la région cliquée
         const container = document.getElementById('map-container');
         const bounds = path.bounds(feature);
-        const dx = bounds[1][0] - bounds[0][0];
-        const dy = bounds[1][1] - bounds[0][1];
-        const x = (bounds[0][0] + bounds[1][0]) / 2;
-        const y = (bounds[0][1] + bounds[1][1]) / 2;
+        const dx = bounds[1][0] - bounds[0][0]; // Largeur de la région
+        const dy = bounds[1][1] - bounds[0][1]; // Hauteur de la région
+        const x = (bounds[0][0] + bounds[1][0]) / 2; // Centre X de la région
+        const y = (bounds[0][1] + bounds[1][1]) / 2; // Centre Y de la région
         
-        const scale = 0.9 / Math.max(dx / container.clientWidth, dy / container.clientHeight);
+        // 👇 NOUVEAU : Définition de l'espace visuel RÉEL 👇
+        const padRight = 360; 
+        const padLeft = 30;
+        const availableWidth = container.clientWidth - padRight - padLeft;
+        const availableHeight = container.clientHeight - 60; // 30px haut + 30px bas
+
+        // Nouveau centre de l'écran (décalé vers la gauche)
+        const visualCenterX = padLeft + (availableWidth / 2);
+        const visualCenterY = container.clientHeight / 2;
+
+        // On calcule le zoom maximal possible pour rentrer dans l'espace RÉEL
+        const scale = 0.9 / Math.max(dx / availableWidth, dy / availableHeight);
         STATE.view.zoomLevel = scale; // Stockage dans le STATE
 
-        const translate = [container.clientWidth / 2 - scale * x, container.clientHeight / 2 - scale * y];
+        // Translation vers le NOUVEAU centre visuel
+        const translate = [visualCenterX - scale * x, visualCenterY - scale * y];
 
         g.transition().duration(CONFIG.visu.transitionDuration)
             .attr("transform", `translate(${translate})scale(${scale})`)
@@ -920,7 +1032,7 @@ function updateBarChart() {
     );
 
     // 2. Filtrage Géographique (France, Région survolée, ou Dépt survolé)
-    let title = "France"; // Titre par défaut
+    let title = "France"; 
     
     if (STATE.chart.targetCode) {
         if (STATE.view.regionCode === null) {
@@ -928,29 +1040,53 @@ function updateBarChart() {
         } else {
             bData = bData.filter(d => d.Dep_Code === STATE.chart.targetCode);
         }
-        // On récupère le nom de la zone survolée stocké dans le STATE
         title = STATE.chart.targetName; 
     }
 
     d3.select("#bar-chart-title").text(`Comparaison : ${title}`);
 
-    // 3. Agréger la PRODUCTION par Culture (en dédoublonnant les mois)
+    // 3. Agréger la PRODUCTION ET LE RENDEMENT par Culture
     const statsCulture = d3.rollups(bData, 
         v => {
-            // Dédoublonnage : on prend la moyenne par département d'abord
-            const parDept = d3.rollup(v, leaves => d3.mean(leaves, d => d.production), d => d.Dep_Code);
-            // Puis on somme les départements pour avoir le total
-            return d3.sum(Array.from(parDept.values()));
+            // Dédoublonnage : moyenne par département pour la prod et le rendement
+            const parDept = d3.rollup(v, 
+                leaves => ({
+                    prod: d3.mean(leaves, d => d.production),
+                    rent: d3.mean(leaves, d => d.rend_euro_par_ha)
+                }), 
+                d => d.Dep_Code
+            );
+            
+            const arr = Array.from(parDept.values());
+            return {
+                production: d3.sum(arr, d => d.prod),
+                // Moyenne des rendements des départements
+                rentabilite: arr.length > 0 ? d3.mean(arr, d => d.rent) : 0 
+            };
         },
         d => d.culture
-    ).sort((a, b) => b[1] - a[1]) // Trier du plus grand au plus petit
-     .slice(0, 5); // Ne garder que le Top 5 pour que ce soit lisible
+    )
+    // On transforme le tableau en objets clairs pour faciliter la lecture
+    .map(([culture, stats]) => ({
+        culture: culture,
+        production: stats.production,
+        rentabilite: stats.rentabilite
+    }))
+    .sort((a, b) => b.production - a.production) // Tri par production
+    .slice(0, 5); // Top 5
 
-    // 4. Mettre à jour les échelles
     const innerWidth = document.getElementById('bar-chart').clientWidth - barMargin.left - barMargin.right;
-    xBarScale.domain([0, d3.max(statsCulture, d => d[1]) || 1]).range([0, innerWidth]);
-    yBarScale.domain(statsCulture.map(d => d[0]));
 
+    // 4. Mettre à jour les échelles (X Prod, Y Culture, et X Rentabilité)
+    xBarScale.domain([0, d3.max(statsCulture, d => d.production) || 1]).range([0, innerWidth]);
+    yBarScale.domain(statsCulture.map(d => d.culture));
+
+    // NOUVEAU : Échelle dédiée au rendement (indépendante de la production)
+    const xRentScale = d3.scaleLinear()
+        .domain([0, d3.max(statsCulture, d => d.rentabilite) || 1])
+        .range([0, innerWidth]);
+
+    // 5. Mise à jour des Axes
     barG.select(".x-bar-axis").transition().duration(500).call(
         d3.axisBottom(xBarScale).ticks(3).tickFormat(d => {
             if (d >= 1000000) return (d / 1000000).toFixed(1) + "M";
@@ -959,41 +1095,84 @@ function updateBarChart() {
         })
     );
     
-    // On dessine l'axe Y
     barG.select(".y-bar-axis").transition().duration(500).call(d3.axisLeft(yBarScale));
     
-    // On rend le texte de l'axe Y cliquable
     barG.select(".y-bar-axis").selectAll("text")
         .style("font-size", "10px")
-        .style("cursor", "pointer") // Curseur "main"
+        .style("cursor", "pointer")
         .style("font-weight", d => d === STATE.filters.culture ? "bold" : "normal")
-        .on("click", (event, d) => changeCultureFromBar(d)); // Clic sur le texte
+        .on("click", (event, d) => changeCultureFromBar(d)); 
 
-    // 6. Dessiner les barres
-    const bars = barG.selectAll(".bar").data(statsCulture, d => d[0]);
+    // 6. Dessiner les BARRES (Production)
+    const bars = barG.selectAll(".bar").data(statsCulture, d => d.culture);
 
     bars.join(
         enter => enter.append("rect")
             .attr("class", "bar")
-            .attr("y", d => yBarScale(d[0]))
+            .attr("y", d => yBarScale(d.culture))
             .attr("height", yBarScale.bandwidth())
             .attr("x", 0)
             .attr("width", 0)
-            .attr("fill", d => d[0] === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")
-            .style("cursor", "pointer") // Curseur "main"
-            .on("click", (event, d) => changeCultureFromBar(d[0])) // Clic sur la barre
-            .call(e => e.transition().duration(500).attr("width", d => xBarScale(d[1]))),
+            .attr("fill", d => d.culture === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")
+            .style("cursor", "pointer")
+            .on("click", (event, d) => changeCultureFromBar(d.culture))
+            .call(e => e.transition().duration(500).attr("width", d => xBarScale(d.production))),
         
         update => update
-            .style("cursor", "pointer")
-            .on("click", (event, d) => changeCultureFromBar(d[0]))
+            .on("click", (event, d) => changeCultureFromBar(d.culture))
             .call(u => u.transition().duration(500)
-                .attr("y", d => yBarScale(d[0]))
+                .attr("y", d => yBarScale(d.culture))
                 .attr("height", yBarScale.bandwidth())
-                .attr("width", d => xBarScale(d[1]))
-                .attr("fill", d => d[0] === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")),
+                .attr("width", d => xBarScale(d.production))
+                .attr("fill", d => d.culture === STATE.filters.culture ? "#2ecc71" : "#bdc3c7")),
             
         exit => exit.transition().duration(300).attr("width", 0).remove()
+    );
+
+    // 7. NOUVEAU : Dessiner les LIGNES (Rendement)
+    const rentLines = barG.selectAll(".rent-line").data(statsCulture, d => d.culture);
+
+    rentLines.join(
+        enter => enter.append("line")
+            .attr("class", "rent-line")
+            // Centrage vertical : position Y de la barre + la moitié de sa hauteur
+            .attr("y1", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("y2", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("x1", 0)
+            .attr("x2", 0) // Départ à 0
+            .attr("stroke", "#e67e22") // Couleur Orange pour rappeler la rentabilité du graphique principal
+            .attr("stroke-width", 2)
+            .style("pointer-events", "none") // Les clics passent à travers pour toucher la barre
+            .call(e => e.transition().duration(500).attr("x2", d => xRentScale(d.rentabilite))),
+            
+        update => update.call(u => u.transition().duration(500)
+            .attr("y1", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("y2", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("x2", d => xRentScale(d.rentabilite))),
+            
+        exit => exit.transition().duration(300).attr("x2", 0).remove()
+    );
+
+    // 8. NOUVEAU : Dessiner les POINTS (Fin de la ligne de Rendement)
+    const rentDots = barG.selectAll(".rent-dot").data(statsCulture, d => d.culture);
+
+    rentDots.join(
+        enter => enter.append("circle")
+            .attr("class", "rent-dot")
+            .attr("cy", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("cx", 0)
+            .attr("r", 4.5) // Taille du point
+            .attr("fill", "#fff") // Fond blanc
+            .attr("stroke", "#e67e22") // Contour orange
+            .attr("stroke-width", 2)
+            .style("pointer-events", "none")
+            .call(e => e.transition().duration(500).attr("cx", d => xRentScale(d.rentabilite))),
+            
+        update => update.call(u => u.transition().duration(500)
+            .attr("cy", d => yBarScale(d.culture) + yBarScale.bandwidth() / 2)
+            .attr("cx", d => xRentScale(d.rentabilite))),
+            
+        exit => exit.transition().duration(300).attr("cx", 0).remove()
     );
 }
 

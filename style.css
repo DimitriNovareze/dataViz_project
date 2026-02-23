@@ -188,6 +188,8 @@ select {
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     z-index: 10;
+    width: 320px; /* Tu peux ajuster cette valeur (ex: 300px ou 340px) selon ton besoin */
+    box-sizing: border-box; /* Assure que les 20px de padding sont inclus dans les 320px */
 }
 
 .legend-container h4 {
@@ -244,14 +246,18 @@ select {
     position: relative;
     width: 100%;
     height: 200px;
-    flex-shrink: 0; /* Empêche le panneau de s'écraser sur les petits écrans */
+    flex-shrink: 0; 
     
     background: rgba(255, 255, 255, 0.95);
-    border-top: 1px solid #ccc;
+    border-top: none; 
+    border-left: 1px solid #b4b4b4; 
     padding: 10px 20px;
-    box-sizing: border-box; /* Important pour que le padding ne fausse pas la largeur */
+    box-sizing: border-box; 
     z-index: 50;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    
+    /* Modifié : Ombre restreinte uniquement au bord supérieur */
+    box-shadow: 0 -10px 10px -10px rgba(0,0,0,0.15); 
+    
     display: flex;
     flex-direction: column;
 }
@@ -334,6 +340,41 @@ select {
 .line-path { 
     fill: none; 
     stroke-width: 2px; 
+}
+
+/* Modification de la sidebar existante */
+.sidebar {
+    overflow-y: auto; /* Permet le défilement si l'écran est petit */
+}
+
+/* Styles pour le bouton Sans Filtre et le tableau */
+.btn-small {
+    background: #ecf0f1;
+    border: 1px solid #bdc3c7;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #7f8c8d;
+    transition: all 0.2s;
+}
+
+.btn-small:hover {
+    background: #bdc3c7;
+    color: #333;
+}
+
+.btn-small.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    font-weight: bold;
+}
+
+#yield-table td {
+    padding: 6px;
+    border-bottom: 1px solid #f1f2f6;
+    color: #444;
 }
 
 /* ==========================================================================
