@@ -53,6 +53,7 @@ const STATE = {
     },
     filters: {          // Filtres actifs
         culture: null,
+        compareCultures: [],
         annee: null,
         saison: null
     },
@@ -161,7 +162,7 @@ async function initApp() {
 }
 
 function initMenus() {
-    // Helpers pour remplir les selects
+    // 1. Définition de 'unique' (disponible pour tout ce qui est dans initMenus)
     const unique = (key) => [...new Set(STATE.data.map(d => d[key]))].sort();
     
     const setupSelect = (id, key, isNum = false) => {
@@ -171,23 +172,20 @@ function initMenus() {
         const sel = d3.select(id);
         sel.selectAll("option").data(opts).enter().append("option").text(d => d);
         
-        // Sélection par défaut
         if (opts.length > 0) sel.property("value", opts[0]);
         
-        // Listener
         sel.on("change", () => {
             STATE.filters[key] = isNum ? +sel.property("value") : sel.property("value");
             updateEngine();
         });
 
-        // Set initial state
         STATE.filters[key] = isNum ? +sel.property("value") : sel.property("value");
     };
 
+    // 2. Initialisation classique
     setupSelect("#select-culture", "culture");
     setupSelect("#select-annee", "Annee", true);
     
-    // Pour saison, on filtre les vides
     const saisons = [...new Set(STATE.data.map(d => d.Saison))].filter(s => s).sort();
     const selSaison = d3.select("#select-saison");
     selSaison.selectAll("option").data(saisons).enter().append("option").text(d => d);
@@ -200,27 +198,51 @@ function initMenus() {
     STATE.filters.saison = selSaison.property("value");
 
     d3.select("#btn-back").on("click", resetZoom);
-    // --- NOUVEAU : Gestion du changement d'unité ---
-    const selUnit = d3.select("#select-unit");
-    selUnit.on("change", () => {
-        STATE.view.prodUnit = selUnit.property("value");
-        updateEngine(); // Relance le calcul pour mettre à jour la légende
-        // Si on a un graphique affiché, on force aussi la mise à jour des labels
-        updateChart(); 
+
+    // 3. Écouteur pour le changement d'unité (Tonnes / Eiffel / Pyramides)
+    d3.select("#select-unit").on("change", function() {
+        STATE.view.prodUnit = this.value;
+        updateEngine();
     });
 
-    // Gestion du bouton "Sans Filtres" du tableau
-    const btnTableFilter = d3.select("#btn-table-filter");
-    btnTableFilter.on("click", function() {
-        STATE.table.allCultures = !STATE.table.allCultures;
-        if (STATE.table.allCultures) {
-            d3.select(this).classed("active", true).text("✅ Sans Filtres");
-        } else {
-            d3.select(this).classed("active", false).text("Culture ciblée");
-        }
-        updateTable(); // On met à jour QUE le tableau, pas la carte entière
+    // 4. Fonction pour construire les checkboxes de comparaison
+    function renderCompareCheckboxes() {
+        const container = d3.select("#compare-checkboxes");
+        container.html(""); // On vide à chaque fois qu'on redessine
+        const cultures = unique("culture"); // 'unique' marche parfaitement ici !
+
+        cultures.forEach(c => {
+            // On ne met pas la culture principale dans les comparaisons
+            if (c === STATE.filters.culture) return;
+
+            const lbl = container.append("label");
+            lbl.append("input")
+               .attr("type", "checkbox")
+               .property("checked", STATE.filters.compareCultures.includes(c))
+               .on("change", function() {
+                   if (this.checked) {
+                       STATE.filters.compareCultures.push(c);
+                   } else {
+                       STATE.filters.compareCultures = STATE.filters.compareCultures.filter(item => item !== c);
+                   }
+                   updateChart();
+               });
+            lbl.append("span").text(c);
+        });
+    }
+
+    // On affiche les cases au démarrage
+    renderCompareCheckboxes();
+
+    // 5. Modification du comportement quand on change la culture principale
+    d3.select("#select-culture").on("change", function() {
+        STATE.filters.culture = this.value;
+        // Si la nouvelle culture principale était cochée en comparaison, on l'enlève
+        STATE.filters.compareCultures = STATE.filters.compareCultures.filter(c => c !== STATE.filters.culture);
+        renderCompareCheckboxes(); // On met à jour visuellement les cases
+        updateEngine();
     });
-}
+} // <-- L'accolade magique de fin est bien là !
 
 // =============================================================================
 // 4. ENGINE (Moteur de Rendu)
@@ -487,8 +509,6 @@ function initChartContainer() {
         .attr("transform", `translate(0, ${h - chartMargin.top - chartMargin.bottom})`);
     chartG.append("g").attr("class", "y-axis");
 
-    // Ligne
-    chartG.append("path").attr("class", "line-path");
 
 //TOOLTIP
 
@@ -525,10 +545,13 @@ function initChartContainer() {
         STATE.chart.metric = this.value;
         updateChart();
     });
-}
-function updateChart() {
+}function updateChart() {
+    // 1. Définir les cultures à afficher (Principale + Celles à comparer)
+    const culturesToShow = [STATE.filters.culture, ...STATE.filters.compareCultures];
+
+    // 2. Filtrer les données globales
     let historyData = STATE.data.filter(d => 
-        d.culture === STATE.filters.culture && 
+        culturesToShow.includes(d.culture) && 
         d.Saison === STATE.filters.saison
     );
 
@@ -542,18 +565,20 @@ function updateChart() {
         title = STATE.chart.targetName;
     }
 
-    // Détecte si on est sur une métrique mensuelle ou annuelle
-    // (J'ai mis 'surface' ou 'stock' selon ce que vous utilisez)
     const isMonthly = (STATE.chart.metric === 'surface' || STATE.chart.metric === 'stock');
 
-    // Agrégation chronologique
-    const nested = d3.rollups(historyData, 
-        v => {
-            if (isMonthly) {
-                // MENSUEL : On somme simplement la surface de tous les départements pour CE mois-là
-                return d3.sum(v, d => d.surface || d.stock || 0); 
-            } else {
-                // ANNUEL : On dédoublonne d'abord par département (moyenne), puis on somme/moyenne la zone
+    // 3. GROUPE PAR CULTURE
+    const dataByCulture = d3.group(historyData, d => d.culture);
+    
+    const plotData = [];
+    let globalMaxY = 0;
+    let globalDates = []; 
+
+    dataByCulture.forEach((entries, cultureName) => {
+        // Agrégation par date pour CETTE culture
+        const nested = d3.rollups(entries, 
+            v => {
+                if (isMonthly) return d3.sum(v, d => d.surface || d.stock || 0); 
                 const parDept = d3.rollup(v,
                     leaves => ({
                         prod: d3.mean(leaves, d => d.production),
@@ -561,116 +586,143 @@ function updateChart() {
                     }),
                     d => d.Dep_Code
                 );
+                return STATE.chart.metric === 'production' 
+                    ? d3.sum(Array.from(parDept.values()), d => d.prod)
+                    : d3.mean(Array.from(parDept.values()), d => d.rent);
+            },
+            d => isMonthly ? new Date(d.Annee, (d.Mois || 1) - 1, 1) : new Date(d.Annee, 0, 1)
+        ).sort((a, b) => a[0] - b[0]);
 
-                if (STATE.chart.metric === 'production') {
-                    return d3.sum(Array.from(parDept.values()), d => d.prod);
-                } else {
-                    return d3.mean(Array.from(parDept.values()), d => d.rent);
-                }
-            }
-        },
-        // Astuce : Création d'une vraie Date. Si c'est annuel, on cale au 1er Janvier.
-        d => isMonthly ? new Date(d.Annee, (d.Mois || 1) - 1, 1) : new Date(d.Annee, 0, 1)
-    ).sort((a, b) => a[0] - b[0]);
+        if (nested.length > 0) {
+            const maxY = d3.max(nested, d => d[1]);
+            if (maxY > globalMaxY) globalMaxY = maxY;
+            globalDates = globalDates.concat(nested.map(d => d[0].getTime())); // Stocker les dates pour l'axe X
+        }
+        plotData.push({ culture: cultureName, values: nested });
+    });
 
     d3.select("#chart-title").text(`${title} : Historique ${STATE.chart.metric}`);
 
-    if (nested.length === 0) {
-        chartG.select(".line-path").attr("d", null);
+    if (plotData.length === 0 || globalDates.length === 0) {
+        chartG.selectAll(".line-path").remove();
         return;
     }
 
-    xScale.domain(d3.extent(nested, d => d[0]));
-    yScale.domain([0, d3.max(nested, d => d[1]) * 1.1]);
+    // 4. Échelles & Axes
+    const allUniqueDates = Array.from(new Set(globalDates)).sort().map(t => new Date(t));
+    xScale.domain(d3.extent(allUniqueDates));
+    yScale.domain([0, globalMaxY * 1.1]);
 
     const w = document.getElementById('line-chart').clientWidth;
     xScale.range([0, w - chartMargin.left - chartMargin.right]);
 
-    // Formatage de l'axe X : affiche les années, mais comprend les mois
-    chartG.select(".x-axis").transition()
-        .call(d3.axisBottom(xScale).ticks(isMonthly ? d3.timeMonth.every(6) : d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
+    chartG.select(".x-axis").transition().call(d3.axisBottom(xScale).ticks(isMonthly ? d3.timeMonth.every(6) : d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
+    chartG.select(".y-axis").transition().call(d3.axisLeft(yScale).ticks(5).tickFormat(d => {
+        if (d >= 1000000) return (d / 1000000).toFixed(1) + "M";
+        if (d >= 1000) return (d / 1000).toFixed(1) + "k";
+        return d;
+    }));
+
+    // 5. Palette de couleurs pour la comparaison (Couleur officielle pour la principale, autres couleurs pour le reste)
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+    const getLineColor = (culture) => {
+        if (culture === STATE.filters.culture) {
+            return STATE.chart.metric === 'rentabilite' ? "#e67e22" : isMonthly ? "#2980b9" : "#27ae60";
+        }
+        return colorScale(culture);
+    };
+
+
+    const chartLegend = d3.select("#chart-legend");
+    chartLegend.html(""); // On vide l'ancienne légende
+
+    plotData.forEach(plot => {
+        const isMain = plot.culture === STATE.filters.culture;
+        const color = getLineColor(plot.culture);
+
+        const item = chartLegend.append("div").attr("class", "chart-legend-item");
+        
+        item.append("div")
+            .attr("class", "chart-legend-color")
+            .style("background-color", color)
+            // Contour noir pour bien repérer la culture principale
+            .style("border", isMain ? "2px solid #333" : "1px solid #aaa"); 
+        
+        item.append("span")
+            .text(plot.culture)
+            .style("font-weight", isMain ? "bold" : "normal");
+    });
+
+    // 6. DESSINER LES LIGNES MULTIPLES
+    const line = d3.line().x(d => xScale(d[0])).y(d => yScale(d[1])).curve(d3.curveMonotoneX);
+
+    const lines = chartG.selectAll(".line-path").data(plotData, d => d.culture);
     
-    chartG.select(".y-axis").transition().call(d3.axisLeft(yScale).ticks(5));
+    lines.join(
+        enter => enter.append("path")
+            .attr("class", "line-path")
+            .attr("fill", "none")
+            // Ligne plus épaisse pour la culture principale
+            .attr("stroke-width", d => d.culture === STATE.filters.culture ? 3 : 1.5)
+            .attr("stroke", d => getLineColor(d.culture))
+            .attr("d", d => line(d.values))
+            .style("opacity", 0)
+            .call(e => e.transition().duration(500).style("opacity", 1)),
+        update => update.call(u => u.transition().duration(500)
+            .attr("stroke-width", d => d.culture === STATE.filters.culture ? 3 : 1.5)
+            .attr("stroke", d => getLineColor(d.culture))
+            .attr("d", d => line(d.values))),
+        exit => exit.transition().duration(300).style("opacity", 0).remove()
+    );
 
-    const line = d3.line()
-        .x(d => xScale(d[0]))
-        .y(d => yScale(d[1]))
-        .curve(d3.curveMonotoneX);
-
-    chartG.select(".line-path")
-        .datum(nested)
-        .attr("d", line)
-        .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : 
-                        isMonthly ? "#2980b9" : "#27ae60");
-
-//TOOL TIP
-
-    const innerWidth = document.getElementById('line-chart').clientWidth - chartMargin.left - chartMargin.right;
+    // 7. TOOLTIP POUR COURBES MULTIPLES
+    const innerWidth = w - chartMargin.left - chartMargin.right;
     const innerHeight = document.getElementById('line-chart').clientHeight - chartMargin.top - chartMargin.bottom;
     
-    chartG.select(".overlay")
-        .attr("width", innerWidth)
-        .attr("height", innerHeight);
-        
+    chartG.select(".overlay").attr("width", innerWidth).attr("height", innerHeight);
     chartG.select(".focus-line").attr("y2", innerHeight);
 
-    // Outil mathématique pour trouver le point le plus proche
-    const bisectDate = d3.bisector(d => d[0]).left;
+    // On cache le vieux cercle de focus car on a maintenant plusieurs lignes
+    chartG.select(".focus-circle").style("display", "none"); 
+    
+    const bisectDate = d3.bisector(d => d).left;
 
-    // Interactions souris
     chartG.select(".overlay")
-        .on("mouseover", () => {
-            if (nested.length > 0) {
-                chartG.select(".focus").style("display", null);
-                tooltip.classed("hidden", false);
-            }
-        })
-        .on("mouseout", () => {
-            chartG.select(".focus").style("display", "none");
-            tooltip.classed("hidden", true);
-        })
+        .on("mouseover", () => { chartG.select(".focus").style("display", null); tooltip.classed("hidden", false); })
+        .on("mouseout", () => { chartG.select(".focus").style("display", "none"); tooltip.classed("hidden", true); })
         .on("mousemove", (event) => {
-            if (nested.length === 0) return;
-
-            // Déduire la date pointée par la souris sur l'axe X
             const x0 = xScale.invert(d3.pointer(event)[0]);
             
-            // Trouver l'index de la donnée la plus proche
-            const i = bisectDate(nested, x0, 1);
-            const d0 = nested[i - 1];
-            const d1 = nested[i];
+            // Trouver la date la plus proche sur l'axe X
+            const i = bisectDate(allUniqueDates, x0, 1);
+            const d0 = allUniqueDates[i - 1];
+            const d1 = allUniqueDates[i];
+            const closestDate = (!d0) ? d1 : (!d1) ? d0 : (x0 - d0 > d1 - x0) ? d1 : d0;
+
+            if (!closestDate) return;
+
+            // Déplacer la ligne verticale
+            chartG.select(".focus").attr("transform", `translate(${xScale(closestDate)},0)`);
+
+            const timeStr = isMonthly ? closestDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : closestDate.getFullYear();
             
-            // Choisir le point exact le plus proche (à gauche ou à droite de la souris)
-            let d;
-            if (!d0) d = d1;
-            else if (!d1) d = d0;
-            else d = x0 - d0[0] > d1[0] - x0 ? d1 : d0;
-
-            // Déplacer la ligne verticale et le cercle
-            chartG.select(".focus")
-                .attr("transform", `translate(${xScale(d[0])},0)`);
-            chartG.select(".focus-circle")
-                .attr("cy", yScale(d[1]))
-                .style("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : isMonthly ? "#2980b9" : "#27ae60");
-
-            // Formatage de la date (Année simple ou Mois + Année)
-            const timeStr = isMonthly 
-                ? d[0].toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) 
-                : d[0].getFullYear();
+            // Construire le texte du tooltip pour TOUTES les cultures à cette date
+            let tooltipHtml = `<div style="text-align:left;"><strong>${timeStr}</strong><br/><hr style="margin:4px 0; border:0; border-top:1px solid #555;">`;
             
-            // Formatage de la valeur affichée
-            let valStr = "";
-            if (STATE.chart.metric === 'rentabilite') {
-                valStr = Math.round(d[1]).toLocaleString() + " €/ha";
-            } else {
-                valStr = Math.round(d[1]).toLocaleString() + (STATE.chart.metric === 'stock' ? " T" : " T");
-            }
+            plotData.forEach(plot => {
+                // Trouver la valeur de cette culture à la date survolée
+                const point = plot.values.find(v => v[0].getTime() === closestDate.getTime());
+                if (point) {
+                    const val = Math.round(point[1]).toLocaleString() + (STATE.chart.metric === 'rentabilite' ? " €/ha" : " T");
+                    const color = getLineColor(plot.culture);
+                    // Mettre en gras si c'est la culture principale
+                    const fw = plot.culture === STATE.filters.culture ? "bold" : "normal";
+                    tooltipHtml += `<span style="color:${color}; font-weight:${fw};">■</span> <span style="font-weight:${fw};">${plot.culture}</span> : ${val}<br/>`;
+                }
+            });
+            tooltipHtml += `</div>`;
 
-            // Affichage dans le HTML du tooltip (le même qu'on utilise pour la carte !)
-            tooltip.html(`<div style="text-align:center;">
-                            <strong>${timeStr}</strong><br/>
-                            <span style="font-size:1.1em; color:#FFD700">${valStr}</span>
-                          </div>`)
+            tooltip.html(tooltipHtml)
                 .style("left", (event.pageX + 15) + "px")
                 .style("top", (event.pageY - 30) + "px");
         });

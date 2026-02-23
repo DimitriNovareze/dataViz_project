@@ -19,9 +19,15 @@
 
             <div class="controls">
                 <div class="control-group">
-                    <label>Culture</label>
+                    <label>Culture principale</label>
                     <select id="select-culture"></select>
                 </div>
+                
+               <div class="control-group">
+                   <label>Comparer avec (Courbes) :</label>
+                   <div id="compare-checkboxes" class="checkbox-container"></div>
+                </div>
+
                 <div class="control-group">
                     <label>Saison :</label>
                     <select id="select-saison"></select> 
@@ -38,36 +44,13 @@
                     <div id="region-title">France Entière</div>
                 </div>
             </div>
-            
-            <div class="legend-container">
-    
-            <div class="legend-block">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <label style="margin: 0;">Production</label>
-                    <select id="select-unit" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ccc;">
-                        <option value="tonnes">Tonnes (T / kT)</option>
-                        <option value="eiffel">Tours Eiffel</option>
-                        <option value="pyramid">Pyramides Khéops</option>
-                    </select>
-                </div>
-                <div id="legend-color-gradient" class="legend-bar"></div>
-                <div class="legend-labels">
-                    <span id="legend-prod-min">0</span>
-                    <span id="legend-prod-max">0</span>
-                </div>
-            </div>
 
-           <div class="bar-chart-container" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
-    <label id="bar-chart-title" style="font-size: 0.9rem; font-weight: 500; color: #333;">Comparaison : France</label>
-    <div id="bar-chart" style="height: 180px; width: 100%; margin-top: 10px;"></div>
-</div>
-            <div class="legend-block" style="margin-top: 15px;">
-                <label>Rendement (€/ha)</label>
-                <div id="legend-size-container"></div>
+            <div class="bar-chart-container" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
+                <label id="bar-chart-title" style="font-size: 0.9rem; font-weight: 500; color: #333;">Comparaison : France</label>
+                <div id="bar-chart" style="height: 180px; width: 100%; margin-top: 10px;"></div>
             </div>
             
-        </div>
-        <div class="top-yields-container" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+            <div class="top-yields-container" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <label style="font-size: 0.9rem; font-weight: 500; color: #333; margin: 0;">Top Rendements</label>
                     <button id="btn-table-filter" class="btn-small">Culture ciblée</button>
@@ -86,25 +69,47 @@
                 </div>
             </div>
         </aside>
+<main class="map-wrapper">
+            <div class="legend-container">
+                <div class="legend-block">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <label style="margin: 0;">Production</label>
+                        <select id="select-unit" style="padding: 2px 5px; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ccc;">
+                            <option value="tonnes">Tonnes (T / kT)</option>
+                            <option value="eiffel">Tours Eiffel</option>
+                            <option value="pyramid">Pyramides Khéops</option>
+                        </select>
+                    </div>
+                    <div id="legend-color-gradient" class="legend-bar"></div>
+                    <div class="legend-labels">
+                        <span id="legend-prod-min">0</span>
+                        <span id="legend-prod-max">0</span>
+                    </div>
+                </div>
 
-        <main class="map-wrapper">
+                <div class="legend-block" style="margin-top: 15px;">
+                    <label>Rendement (€/ha)</label>
+                    <div id="legend-size-container"></div>
+                </div>
+            </div>
+
             <div id="map-container"></div>
+
             <div id="chart-panel">
                 <div class="chart-header">
                     <h3 id="chart-title">Historique : France</h3>
+                    
+                    <div id="chart-legend" class="chart-legend"></div>
+                    
                     <div class="chart-toggles">
                         <label><input type="radio" name="metric" value="production" checked> Production</label>
                         <label><input type="radio" name="metric" value="rentabilite"> Rentabilité</label>
-                        <label><input type="radio" name = "metric" value="stock"> Stock mensuel</label>
-                        </div>
+                        <label><input type="radio" name="metric" value="stock"> Stock mensuel</label>
+                    </div>
                 </div>
                 <div id="line-chart"></div>
             </div>
-        </main>
-
-    </div>
-
-    <div id="tooltip" class="tooltip hidden"></div>
+            </main>
 
     <script src="script.js"></script>
 </body>
