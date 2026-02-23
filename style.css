@@ -312,3 +312,42 @@ select {
         transform: translateY(0); 
     } 
 }
+
+#line-chart {
+    flex-grow: 1;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Éléments internes du graphique SVG */
+.axis text { 
+    font-size: 10px; 
+    fill: #666; 
+}
+
+.axis path, .axis line { 
+    stroke: #ddd; 
+}
+
+.line-path { 
+    fill: none; 
+    stroke-width: 2px; 
+}
+
+/* ==========================================================================
+   6. UTILITAIRES & ANIMATIONS
+   ========================================================================== */
+.hidden { 
+    display: none !important; 
+}
+
+@keyframes fadeIn { 
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    } 
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    } 
+}

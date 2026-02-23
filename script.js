@@ -486,7 +486,6 @@ function updateChart() {
 
     chartG.select(".line-path")
         .datum(nested)
-        .transition().duration(500)
         .attr("d", line)
         .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : 
                         isMonthly ? "#2980b9" : "#27ae60");
@@ -583,37 +582,31 @@ function renderMapLayer(data, scales) {
         enter => enter.append("path")
             .attr("class", "map-area")
             .attr("d", path)
-            // ... reste du style ...
+            // LIGNE AJOUTÉE : On force la couleur de départ à blanc (ou couleur vide)
+            .attr("fill", "#ffffff") 
+            .style("opacity", 0) 
             .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
                 .style("opacity", 1) 
                 .attr("fill", d => getFillColor(d, data.map, scales.color))),
         
         update => update
             .attr("d", path)
-            .attr("fill", d => getFillColor(d, data.map, scales.color)))
+            .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+                .attr("fill", d => getFillColor(d, data.map, scales.color))),
+            
+        exit => exit.remove() 
     )
     .on("click", (e, d) => handleZoom(d))
-    
-    // --- MODIFICATION ICI : MOUSEMOVE ---
     .on("mousemove", (e, d) => {
         showTooltip(e, d, data.map, scales);
-        
-        // Mise à jour du graphique SI on change de cible
         if (STATE.chart.targetCode !== d.properties.code) {
             STATE.chart.targetCode = d.properties.code;
             STATE.chart.targetName = d.properties.nom;
             updateChart();
         }
     })
-    
-    // --- MODIFICATION ICI : MOUSEOUT ---
     .on("mouseout", () => {
         tooltip.classed("hidden", true);
-        
-        // Optionnel : Revenir à la vue nationale quand on quitte
-        // STATE.chart.targetCode = null;
-        // STATE.chart.targetName = "France";
-        // updateChart();
     });
 }
 function renderSymbolsLayer(data, scales) {
