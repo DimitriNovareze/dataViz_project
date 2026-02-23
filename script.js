@@ -13,7 +13,7 @@ const CONFIG = {
     urls: {
         regions: "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions-version-simplifiee.geojson",
         depts: "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson",
-        csv: "saa_stock_price.csv"
+        csv: "saa_stock_price2.csv"
     },
     visu: {
         radiusMin: 6,  // Rayon pixels (Pire rendement)
