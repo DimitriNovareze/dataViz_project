@@ -131,8 +131,8 @@ select {
 
 /* Silhouette globale de fond */
 .map-outline {
-    fill: black;
-    stroke: black;
+    fill: rgb(255, 255, 255);
+    stroke: rgb(0, 0, 0);
     stroke-width: 3px; /* 3px débordent à l'extérieur, l'intérieur sera caché */
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke; /* Reste à 3px même au zoom max ! */

@@ -16,8 +16,8 @@ const CONFIG = {
         csv: "saa_stock_price.csv"
     },
     visu: {
-        radiusMin: 5,  // Rayon pixels (Pire rendement)
-        radiusMax: 15, // Rayon pixels (Meilleur rendement)
+        radiusMin: 6,  // Rayon pixels (Pire rendement)
+        radiusMax: 20, // Rayon pixels (Meilleur rendement)
         colors: {
             prod: d3.interpolateGreens,
             stars: ["#ffffff", "#FFD700", "#FF4500"], // Blanc -> Or -> Rouge
