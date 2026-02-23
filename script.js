@@ -460,10 +460,6 @@ function updateChart() {
 
     chartG.select(".line-path")
         .datum(nested)
-<<<<<<< HEAD
-        .transition().duration(500)
-=======
->>>>>>> JJ-v2
         .attr("d", line)
         .attr("stroke", STATE.chart.metric === 'rentabilite' ? "#e67e22" : 
                         isMonthly ? "#2980b9" : "#27ae60");
@@ -560,30 +556,15 @@ function renderMapLayer(data, scales) {
         enter => enter.append("path")
             .attr("class", "map-area")
             .attr("d", path)
-<<<<<<< HEAD
-            // ... reste du style ...
-=======
             // LIGNE AJOUTÉE : On force la couleur de départ à blanc (ou couleur vide)
             .attr("fill", "#ffffff") 
             .style("opacity", 0) 
->>>>>>> JJ-v2
             .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
                 .style("opacity", 1) 
                 .attr("fill", d => getFillColor(d, data.map, scales.color))),
         
         update => update
             .attr("d", path)
-<<<<<<< HEAD
-            .attr("fill", d => getFillColor(d, data.map, scales.color)))
-    )
-    .on("click", (e, d) => handleZoom(d))
-    
-    // --- MODIFICATION ICI : MOUSEMOVE ---
-    .on("mousemove", (e, d) => {
-        showTooltip(e, d, data.map, scales);
-        
-        // Mise à jour du graphique SI on change de cible
-=======
             .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
                 .attr("fill", d => getFillColor(d, data.map, scales.color))),
             
@@ -592,27 +573,14 @@ function renderMapLayer(data, scales) {
     .on("click", (e, d) => handleZoom(d))
     .on("mousemove", (e, d) => {
         showTooltip(e, d, data.map, scales);
->>>>>>> JJ-v2
         if (STATE.chart.targetCode !== d.properties.code) {
             STATE.chart.targetCode = d.properties.code;
             STATE.chart.targetName = d.properties.nom;
             updateChart();
         }
     })
-<<<<<<< HEAD
-    
-    // --- MODIFICATION ICI : MOUSEOUT ---
     .on("mouseout", () => {
         tooltip.classed("hidden", true);
-        
-        // Optionnel : Revenir à la vue nationale quand on quitte
-        // STATE.chart.targetCode = null;
-        // STATE.chart.targetName = "France";
-        // updateChart();
-=======
-    .on("mouseout", () => {
-        tooltip.classed("hidden", true);
->>>>>>> JJ-v2
     });
 }
 function renderSymbolsLayer(data, scales) {
