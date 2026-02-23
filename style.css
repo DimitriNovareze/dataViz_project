@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. VARIABLES & GLOBALES
+   ========================================================================== */
 :root {
     --primary: #2c3e50;
     --accent: #27ae60;
@@ -19,7 +22,9 @@ body {
     height: 100vh;
 }
 
-/* Sidebar */
+/* ==========================================================================
+   2. SIDEBAR & CONTROLES
+   ========================================================================== */
 .sidebar {
     width: 300px;
     background: white;
@@ -30,13 +35,34 @@ body {
     z-index: 10;
 }
 
-.header h1 { font-size: 1.5rem; color: var(--primary); margin: 0; }
-.header p { color: #7f8c8d; font-size: 0.9rem; margin-top: 5px; }
+.header h1 { 
+    font-size: 1.5rem; 
+    color: var(--primary); 
+    margin: 0; 
+}
 
-.controls { margin-top: 2rem; flex-grow: 1; }
+.header p { 
+    color: #7f8c8d; 
+    font-size: 0.9rem; 
+    margin-top: 5px; 
+}
 
-.control-group { margin-bottom: 1.5rem; }
-.control-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.controls { 
+    margin-top: 2rem; 
+    flex-grow: 1; 
+}
+
+.control-group { 
+    margin-bottom: 1.5rem; 
+}
+
+.control-group label { 
+    display: block; 
+    font-weight: 500; 
+    margin-bottom: 0.5rem; 
+    font-size: 0.9rem; 
+}
+
 select {
     width: 100%;
     padding: 10px;
@@ -46,13 +72,14 @@ select {
     background: #fff;
 }
 
-/* Bouton Retour */
+/* Bouton Retour & Fil d'Ariane */
 #breadcrumb {
     margin-top: 2rem;
     padding-top: 2rem;
     border-top: 1px solid #eee;
     animation: fadeIn 0.3s ease;
 }
+
 #btn-back {
     background: var(--primary);
     color: white;
@@ -68,28 +95,72 @@ select {
     font-size: 0.9rem;
     transition: background 0.2s;
 }
-#btn-back:hover { background: #34495e; }
-#region-title { text-align: center; margin-top: 10px; font-weight: bold; color: var(--accent); }
 
-/* Légende */
-.legend-container { margin-top: auto; }
-#legend {
-    height: 15px;
-    background: linear-gradient(to right, #ffffe5, #004529); /* Correspond à YlGn */
-    border-radius: 10px;
-    margin: 10px 0;
+#btn-back:hover { 
+    background: #34495e; 
 }
-.legend-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
 
-/* Carte */
-.map-wrapper { flex-grow: 1; position: relative; background: #eef2f3; }
-#map-container { width: 100%; height: 100%; }
+#region-title { 
+    text-align: center; 
+    margin-top: 10px; 
+    font-weight: bold; 
+    color: var(--accent); 
+}
 
-path {
+/* ==========================================================================
+   3. CARTE & INTERACTIVITÉ
+   ========================================================================== */
+.map-wrapper { 
+    flex-grow: 1; 
+    position: relative; /* Référentiel pour la position absolue de la légende */
+    background: #eef2f3; 
+    
+    /* --- NOUVEAUX AJOUTS --- */
+    padding-bottom: 200px;  /* On ampute la zone de dessin de la hauteur exacte du graphique */
+    box-sizing: border-box; /* Obligatoire pour que le padding ne crée pas de barre de défilement */
+}
+
+#map-container { 
+    width: 100%; 
+    height: 100%; 
+}
+
+/* ==========================================================================
+   3. CARTE & INTERACTIVITÉ
+   ========================================================================== */
+
+/* Silhouette globale de fond */
+.map-outline {
+    fill: rgb(255, 255, 255);
+    stroke: rgb(0, 0, 0);
+    stroke-width: 3px; /* 3px débordent à l'extérieur, l'intérieur sera caché */
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke; /* Reste à 3px même au zoom max ! */
+    pointer-events: none; /* Ignore la souris */
+}
+
+/* Zones internes (Régions ou Départements) */
+.map-area {
+    stroke: white; /* Bordure interne classique */
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke; /* Les frontières internes restent fines au zoom */
     transition: fill 0.4s ease, stroke 0.2s;
     cursor: pointer;
 }
-path:hover { stroke: #333; stroke-width: 2px; filter: brightness(0.9); }
+
+.map-area:hover { 
+    stroke: #333; 
+    stroke-width: 2px; 
+    filter: brightness(0.9); 
+}
+
+.star {
+    fill: #FFD700;       
+    stroke: #333;        
+    stroke-width: 0.5px;
+    pointer-events: none; /* Laisse le clic passer à travers vers la carte */
+    transition: transform 0.5s ease;        
+}
 
 /* Tooltip */
 .tooltip {
@@ -103,41 +174,47 @@ path:hover { stroke: #333; stroke-width: 2px; filter: brightness(0.9); }
     z-index: 100;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
-.hidden { display: none !important; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-.star {
-    fill: #FFD700;       /* Or / Jaune brillant */
-    stroke: #333;        /* Contour sombre pour le contraste */
-    stroke-width: 0.5px;
-    pointer-events: none; /* Laisse le clic passer à travers vers la carte */
-    transition: transform 0.5s ease;        
+/* ==========================================================================
+   4. LÉGENDE FLOTTANTE (En haut à droite)
+   ========================================================================== */
+.legend-container {
+    position: absolute; /* Sort l'élément du flux pour flotter sur la carte */
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    z-index: 10;
 }
 
-/* Ajustement pour que la légende soit claire */
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-.legend-star-icon {
-    fill: #FFD700;
-    stroke: #333;
-    stroke-width: 1px;
+.legend-container h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    color: var(--primary);
 }
 
-/* Style des barres de légende */
+.legend-block {
+    margin-bottom: 10px;
+}
+
 .legend-bar {
     height: 12px;
-    background: linear-gradient(to right, #f7fcf5, #00441b); /* Verts */
+    background: linear-gradient(to right, #f7fcf5, #00441b); /* Dégradé de Verts */
     border-radius: 6px;
     margin: 5px 0;
     border: 1px solid #ccc;
 }
 
-/* Conteneur pour la légende des cercles */
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #555;
+}
+
 #legend-size-container {
     height: 60px;
     display: flex;
@@ -145,11 +222,55 @@ path:hover { stroke: #333; stroke-width: 2px; filter: brightness(0.9); }
     justify-content: center;
 }
 
-/* Texte des légendes */
-.legend-labels {
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.legend-star-icon {
+    fill: #FFD700;
+    stroke: #333;
+    stroke-width: 1px;
+}
+
+/* ==========================================================================
+   5. PANNEAU DU GRAPHIQUE (En bas)
+   ========================================================================== */
+#chart-panel {
+    position: fixed;
+    bottom: 0;
+    /* On décale du côté gauche : largeur de la sidebar (300px) + ses paddings (4rem) */
+    left: calc(300px + 4rem); 
+    right: 0;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid #ccc;
+    padding: 10px 20px;
+    z-index: 50;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-header {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.chart-header h3 { 
+    margin: 0; 
+    font-size: 1rem; 
+    color: var(--primary); 
+}
+
+.chart-toggles label {
+    margin-left: 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
     color: #555;
 }
 

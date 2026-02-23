@@ -16,8 +16,8 @@ const CONFIG = {
         csv: "saa_stock_price.csv"
     },
     visu: {
-        radiusMin: 2,  // Rayon pixels (Pire rendement)
-        radiusMax: 15, // Rayon pixels (Meilleur rendement)
+        radiusMin: 6,  // Rayon pixels (Pire rendement)
+        radiusMax: 20, // Rayon pixels (Meilleur rendement)
         colors: {
             prod: d3.interpolateGreens,
             stars: ["#ffffff", "#FFD700", "#FF4500"], // Blanc -> Or -> Rouge
@@ -25,7 +25,7 @@ const CONFIG = {
             mapStroke: "white",
             noData: "#f0f0f0"
         },
-        transitionDuration: 750
+        transitionDuration: 650
     },
     // Mapping Départements -> Régions
     deptToRegion: {
@@ -86,6 +86,24 @@ const Utils = {
         return scaleCheck === 0 
             ? `translate(${center[0]}, ${center[1]}) scale(0)` 
             : `translate(${center[0]}, ${center[1]})`;
+    }
+};
+function formatProduction(tonnes, isShort = false) {
+    const unit = STATE.view.prodUnit;
+    
+    if (unit === 'eiffel') {
+        const eiffels = tonnes / 10100;
+        // On affiche plus de décimales si le chiffre est tout petit
+        return (eiffels < 0.1 && eiffels > 0 ? eiffels.toFixed(3) : eiffels.toFixed(1)) + " 🗼";
+    } 
+    else if (unit === 'pyramid') {
+        const pyr = tonnes / 5750000;
+        return (pyr < 0.1 && pyr > 0 ? pyr.toFixed(4) : pyr.toFixed(2)) + " 🔺";
+    } 
+    else {
+        // Mode classique (Tonnes)
+        if (isShort && tonnes >= 1000) return (tonnes / 1000).toFixed(1) + " kT";
+        return Math.round(tonnes).toLocaleString() + " T";
     }
 };
 
@@ -172,6 +190,14 @@ function initMenus() {
     STATE.filters.saison = selSaison.property("value");
 
     d3.select("#btn-back").on("click", resetZoom);
+    // --- NOUVEAU : Gestion du changement d'unité ---
+    const selUnit = d3.select("#select-unit");
+    selUnit.on("change", () => {
+        STATE.view.prodUnit = selUnit.property("value");
+        updateEngine(); // Relance le calcul pour mettre à jour la légende
+        // Si on a un graphique affiché, on force aussi la mise à jour des labels
+        updateChart(); 
+    });
 }
 
 // =============================================================================
@@ -193,6 +219,11 @@ function initMapContainer() {
         .attr("preserveAspectRatio", "xMidYMid meet");
 
     g = svg.append("g");
+
+    // CRÉATION DES CALQUES (L'ordre définit ce qui est devant/derrière)
+    g.append("path").attr("id", "map-outline"); // Fond (Contour épais)
+    g.append("g").attr("id", "map-areas");      // Milieu (Régions/Départements)
+    g.append("g").attr("id", "map-symbols");    // Devant (Légendes/Cercles)
 
     projection = d3.geoConicConformal()
         .center([2.454071, 46.279229])
@@ -539,7 +570,12 @@ function updateChart() {
 // --- RENDERERS ---------------------------------------------------------------
 
 function renderMapLayer(data, scales) {
-    const paths = g.selectAll("path.map-area")
+    g.select("#map-outline")
+        .datum({type: "FeatureCollection", features: data.features})
+        .attr("class", "map-outline")
+        .attr("d", path);
+
+    const paths = g.select("#map-areas").selectAll("path.map-area")
         .data(data.features, d => d.properties.code);
 
     paths.join(
@@ -549,9 +585,10 @@ function renderMapLayer(data, scales) {
             .attr("d", path)
             // ... reste du style ...
             .call(e => e.transition().duration(CONFIG.visu.transitionDuration)
+                .style("opacity", 1) 
                 .attr("fill", d => getFillColor(d, data.map, scales.color))),
         
-        update => update.call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+        update => update
             .attr("d", path)
             .attr("fill", d => getFillColor(d, data.map, scales.color)))
     )
@@ -580,79 +617,169 @@ function renderMapLayer(data, scales) {
     });
 }
 function renderSymbolsLayer(data, scales) {
-    const stars = g.selectAll("path.star")
+    // Sélection des groupes (au lieu des simples paths)
+    const nodes = g.select("#map-symbols").selectAll("g.symbol-node")
         .data(data.features, d => d.properties.code);
 
-    stars.join(
-        enter => enter.append("path")
-            .attr("class", "star")
-            .attr("transform", d => Utils.getCentroidStr(path, d, 0))
-            .attr("d", circleSymbol.size(0)) // Départ invisible
-            .style("stroke", "#333")
-            .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
-            .call(e => e.transition().duration(CONFIG.visu.transitionDuration).delay(100)
-                .style("fill", d => getStarColor(d, data.map, scales.starColor))
-                .attr("d", d => getStarPath(d, data.map, scales.radius))
-                .attr("transform", d => Utils.getCentroidStr(path, d, 1))),
-        
-        update => update.call(u => u.transition().duration(CONFIG.visu.transitionDuration)
-            .style("fill", d => getStarColor(d, data.map, scales.starColor))
-            .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
-            .attr("d", d => getStarPath(d, data.map, scales.radius))
-            .attr("transform", d => Utils.getCentroidStr(path, d, 1))),
+    // ==========================================
+    // 1. APPARITION (Enter)
+    // ==========================================
+    const nodesEnter = nodes.enter().append("g")
+        .attr("class", "symbol-node")
+        .attr("transform", d => Utils.getCentroidStr(path, d, 1))
+        .style("opacity", 0);
 
-        exit => exit.transition().duration(200)
-            .attr("transform", d => Utils.getCentroidStr(path, d, 0))
-            .remove()
+    nodesEnter.call(e => e.transition().duration(CONFIG.visu.transitionDuration).style("opacity", 1));
+
+    // Ajout du cercle dans le groupe
+    nodesEnter.append("path")
+        .attr("class", "star")
+        .style("stroke", "#333");
+
+    // Ajout du texte (Label) dans le groupe
+    nodesEnter.append("text")
+        .attr("class", "yield-label")
+        .attr("text-anchor", "middle") // Centre le texte horizontalement
+        .style("fill", "#111")
+        .style("font-family", "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif")
+        .style("font-weight", "bold")
+        .style("pointer-events", "none") // Empêche le texte de bloquer le hover de la carte
+        // Effet "Halo" pour garantir la lisibilité même si ça déborde sur une ligne de frontière
+        .style("paint-order", "stroke")
+        .style("stroke", "rgba(255, 255, 255, 0.99)")
+        .style("stroke-linecap", "round")
+        .style("stroke-linejoin", "round");
+
+    // ==========================================
+    // 2. MISE À JOUR (Update + Enter)
+    // ==========================================
+    const nodesUpdate = nodesEnter.merge(nodes);
+
+    // Mise à jour de la position du groupe
+    nodesUpdate.attr("transform", d => Utils.getCentroidStr(path, d, 1));
+
+    // Mise à jour du cercle
+    nodesUpdate.select("path.star")
+        .attr("d", d => getStarPath(d, data.map, scales.radius))
+        .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
+        .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
+            .style("fill", d => getStarColor(d, data.map, scales.starColor))
+        );
+
+    // Mise à jour dynamique du texte
+    nodesUpdate.select("text.yield-label")
+        .text(d => {
+            const val = data.map.get(d.properties.code);
+            // On affiche uniquement si la rentabilité existe et on arrondit à l'unité
+            return (val && val.rentabilite > 0) ? Math.round(val.rentabilite) : "";
+        })
+        // La taille du texte et du halo s'adapte à l'inverse du niveau de zoom
+        .style("font-size", (10 / STATE.view.zoomLevel) + "px")
+        .style("stroke-width", (1.5 / STATE.view.zoomLevel) + "px")
+        .attr("dy", d => {
+            const val = data.map.get(d.properties.code);
+            if (!val || val.rentabilite <= 0) return 0;
+
+            const r = scales.radius(val.rentabilite);
+            const str = Math.round(val.rentabilite).toString();
+            
+            // Évaluation de l'espace: ~6px de large par caractère (ajusté au zoom)
+            const estimatedTextWidth = str.length * (6 / STATE.view.zoomLevel);
+            
+            // Règle de décision : Le diamètre (r*2) est-il plus large que le texte ?
+            if ((r * 2) > estimatedTextWidth + (4 / STATE.view.zoomLevel)) {
+                // Rentre dans le cercle : Centrage vertical
+                return "0.35em"; 
+            } else {
+                // Ne rentre pas : Placement sous le cercle avec une petite marge
+                return (r + (12 / STATE.view.zoomLevel)); 
+            }
+        });
+
+    // ==========================================
+    // 3. DISPARITION (Exit)
+    // ==========================================
+    nodes.exit().call(ex => ex.transition().duration(200)
+        .style("opacity", 0)
+        .remove()
     );
 }
 
 function renderLegends(stats, scales) {
-    // 1. Légende Couleur (Production)
-    const fmtProd = stats.maxProd > 1000 ? (stats.maxProd/1000).toFixed(1)+" kT" : Math.round(stats.maxProd)+" T";
+    // =========================================================
+    // 1. Légende Couleur (Production) - INCHANGÉE
+    // =========================================================
+    const fmtProd = formatProduction(stats.maxProd, true);
     d3.select("#legend-prod-min").text("0");
     d3.select("#legend-prod-max").text(fmtProd);
 
-    // 2. Légende Taille (Rendement) - SVG
+    // =========================================================
+    // 2. Légende Taille (Rendement) - CERCLES TANGENTS
+    // =========================================================
     const container = d3.select("#legend-size-container");
     container.html(""); // Reset
 
     if(stats.maxRent === 0) return;
 
-    const legSvg = container.append("svg").attr("width", 200).attr("height", 60);
+    // Dimensions adaptées pour laisser la place aux lignes et textes à droite
+    const svgWidth = 150;
+    const svgHeight = 70;
+    const legSvg = container.append("svg").attr("width", svgWidth).attr("height", svgHeight);
     
-    // Valeurs à afficher (Min, Moyenne, Max)
-    const values = [stats.minRent, (stats.minRent + stats.maxRent)/2, stats.maxRent];
-    const labels = ["Min", "Moy", "Max"];
+    // ÉTAPE 1 : Tri décroissant des valeurs à afficher (Max d'abord, Min à la fin)
+    const values = [stats.maxRent, (stats.minRent + stats.maxRent)/2, stats.minRent];
     
-    // Rayons *sans* la division du zoom pour la légende (taille "base")
-    // Note: Pour la légende, on veut montrer la taille relative visuelle "idéale"
-    // ou la taille à l'écran. Ici on montre la taille 2px -> 15px.
+    // Échelle des rayons (taille visuelle fixe pour la légende)
     const legScale = d3.scaleSqrt()
         .domain([stats.minRent, stats.maxRent])
         .range([CONFIG.visu.radiusMin, CONFIG.visu.radiusMax]);
 
-    let xPos = 30;
-    values.forEach((val, i) => {
-        const r = legScale(val);
-        // Cercle ou Étoile
-        legSvg.append("path")
-            .attr("d", d3.symbol().type(d3.symbolStar).size(Math.PI * r * r)())
-            .attr("transform", `translate(${xPos}, 30)`)
-            .style("fill", scales.starColor(val))
-            .style("stroke", "#333");
-            
-        // Texte
-        legSvg.append("text")
-            .attr("x", xPos)
-            .attr("y", 55)
-            .attr("text-anchor", "middle")
-            .style("font-size", "10px")
-            .style("fill", "#333")
-            .text(Math.round(val));
+    // ÉTAPE 2 : Définition des repères géométriques
+    const cx = 40; // Centre X des cercles (décalé à gauche)
+    const bottomY = svgHeight - 10; // Point de tangence bas commun
 
-        xPos += 60; // Espacement
-    });
+    // Calque 1 : Les cercles
+    legSvg.selectAll("circle.legend-circle")
+        .data(values)
+        .enter()
+        .append("circle")
+        .attr("class", "legend-circle")
+        .attr("cx", cx)
+        // Application du principe géométrique : on soustrait le rayon à la ligne de base
+        .attr("cy", d => bottomY - legScale(d)) 
+        .attr("r", d => legScale(d))
+        // Intérieur transparent pour ne pas cacher les cercles inférieurs
+        .style("fill", "transparent") 
+        // On conserve la couleur de l'échelle (jaune -> orange) sur le contour
+        .style("stroke", d => scales.starColor(d)) 
+        .style("stroke-width", "1.5px");
+
+    // Calque 2 : Les lignes en pointillé
+    legSvg.selectAll("line.legend-line")
+        .data(values)
+        .enter()
+        .append("line")
+        .attr("class", "legend-line")
+        .attr("x1", cx)
+        // Départ au sommet du cercle (Ligne de base - diamètre)
+        .attr("y1", d => bottomY - (legScale(d) * 2)) 
+        .attr("x2", cx + CONFIG.visu.radiusMax + 15) // Déport vers la droite
+        .attr("y2", d => bottomY - (legScale(d) * 2))
+        .style("stroke", "#888")
+        .style("stroke-dasharray", "2,2")
+        .style("stroke-width", "1px");
+
+    // Calque 3 : Les étiquettes (Textes)
+    legSvg.selectAll("text.legend-text")
+        .data(values)
+        .enter()
+        .append("text")
+        .attr("class", "legend-text")
+        .attr("x", cx + CONFIG.visu.radiusMax + 20) // Positionné juste après la ligne
+        .attr("y", d => bottomY - (legScale(d) * 2) + 4) // +4px pour centrer le texte avec la ligne
+        .text(d => Math.round(d) + " €")
+        .style("font-size", "10px")
+        .style("fill", "#555");
 }
 
 // --- HELPERS DE RENDU --------------------------------------------------------
@@ -681,7 +808,8 @@ function showTooltip(event, d, map, scales) {
     let html = `<strong>${d.properties.nom}</strong>`;
     
     if (val && (val.production > 0 || val.rentabilite > 0)) {
-        html += `<br><span style="color:#2ecc71">█</span> Prod: ${Math.round(val.production).toLocaleString()} T`;
+        // Remplacez : html += `<br><span style="color:#2ecc71">█</span> Prod: ${Math.round(val.production).toLocaleString()} T`;
+        html += `<br><span style="color:#2ecc71">█</span> Prod: ${formatProduction(val.production)}`;
         html += `<br><span style="color:${scales.starColor(val.rentabilite)}">★</span> Rent: ${Math.round(val.rentabilite)} €/ha`;
     } else {
         html += `<br><em>Pas de données</em>`;
