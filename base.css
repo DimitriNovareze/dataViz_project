@@ -1,0 +1,210 @@
+/* ==========================================================================
+   BASE.CSS — Système de design PREVICULTUR
+   Variables, reset, navigation, footer partagés entre toutes les pages
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. VARIABLES
+   -------------------------------------------------------------------------- */
+:root {
+    --cream:        #F5F1E8;
+    --cream-dark:   #EDE8DA;
+    --forest:       #1A3328;
+    --forest-mid:   #274D3B;
+    --forest-light: #3D6B54;
+    --wheat:        #C9952A;
+    --wheat-light:  #E8B84B;
+    --rust:         #8C3D1F;
+    --text:         #1E1E1E;
+    --text-muted:   #6B6259;
+    --border:       #D9D2C2;
+    --white:        #FFFFFF;
+    --nav-h:        56px;
+}
+
+/* --------------------------------------------------------------------------
+   2. RESET
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   3. TYPOGRAPHIE DE BASE
+   -------------------------------------------------------------------------- */
+body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+}
+
+/* --------------------------------------------------------------------------
+   4. GRAIN TEXTURE (overlay global)
+   -------------------------------------------------------------------------- */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. NAVIGATION
+   -------------------------------------------------------------------------- */
+nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: var(--nav-h);
+    background: var(--forest);
+    z-index: 100;
+}
+
+.nav-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--wheat-light);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 4px;
+}
+
+.nav-links a {
+    color: rgba(245, 241, 232, 0.6);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    padding: 5px 12px;
+    border-radius: 3px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.nav-links a:hover {
+    color: var(--cream);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-links a.active {
+    color: var(--wheat-light);
+    font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   6. FOOTER
+   -------------------------------------------------------------------------- */
+footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 48px;
+    border-top: 1px solid var(--border);
+    background: var(--cream-dark);
+}
+
+footer p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+footer a {
+    color: var(--forest-light);
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   7. COMPOSANTS PARTAGÉS
+   -------------------------------------------------------------------------- */
+
+/* En-tête de page (Glossaire, Sources) */
+.page-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--wheat);
+    margin-bottom: 16px;
+}
+
+.page-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--wheat);
+}
+
+.page-header {
+    margin-bottom: 60px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+}
+
+.page-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--forest);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+}
+
+.page-header p {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 620px;
+}
+
+/* Titre de section avec ligne */
+.section-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--forest);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* --------------------------------------------------------------------------
+   8. UTILITAIRES
+   -------------------------------------------------------------------------- */
+.hidden {
+    display: none !important;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

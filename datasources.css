@@ -1,0 +1,351 @@
+/* ==========================================================================
+   DATASOURCES.CSS — Page Sources de données PREVICULTUR (datasources.html)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. BODY & FOND
+   -------------------------------------------------------------------------- */
+body {
+    background: var(--cream);
+    min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   2. WRAPPER DE PAGE
+   -------------------------------------------------------------------------- */
+.page {
+    position: relative;
+    z-index: 1;
+    padding-top: calc(var(--nav-h) + 60px);
+    padding-bottom: 80px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding-left: 48px;
+    padding-right: 48px;
+}
+
+/* --------------------------------------------------------------------------
+   3. BANNIÈRE RÉSUMÉ (chiffres clés)
+   -------------------------------------------------------------------------- */
+.method-banner {
+    display: flex;
+    gap: 0;
+    background: var(--forest);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 60px;
+    position: relative;
+}
+
+/* Dégradé doré décoratif */
+.method-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 200px;
+    height: 100%;
+    background: linear-gradient(to left, rgba(201, 149, 42, 0.15), transparent);
+    pointer-events: none;
+}
+
+.method-item {
+    flex: 1;
+    padding: 28px 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.method-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--wheat-light);
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.method-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(245, 241, 232, 0.5);
+    margin-bottom: 4px;
+}
+
+.method-desc {
+    font-size: 0.82rem;
+    color: rgba(245, 241, 232, 0.7);
+    line-height: 1.5;
+}
+
+.method-divider {
+    width: 1px;
+    background: rgba(245, 241, 232, 0.12);
+    flex-shrink: 0;
+    margin: 20px 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. SECTIONS DE SOURCES
+   -------------------------------------------------------------------------- */
+.sources-section {
+    margin-bottom: 48px;
+}
+
+/* --------------------------------------------------------------------------
+   5. CARTE SOURCE
+   -------------------------------------------------------------------------- */
+.source-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+    animation: fadeUp 0.5s ease both;
+}
+
+.source-card:hover {
+    box-shadow: 0 4px 20px rgba(26, 51, 40, 0.10);
+}
+
+.source-card:nth-child(1) { animation-delay: 0.05s; }
+.source-card:nth-child(2) { animation-delay: 0.12s; }
+.source-card:nth-child(3) { animation-delay: 0.19s; }
+
+/* Barre colorée gauche */
+.source-color-bar {
+    width: 6px;
+    flex-shrink: 0;
+    align-self: stretch;
+    background: var(--forest-light);
+}
+
+.source-card.primary .source-color-bar { background: var(--wheat); }
+.source-card.pending .source-color-bar { background: var(--border); }
+
+/* En-tête de la carte */
+.source-card-header {
+    display: flex;
+    align-items: stretch;
+}
+
+.source-header-content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex: 1;
+    padding: 22px 24px;
+    gap: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   6. BADGES
+   -------------------------------------------------------------------------- */
+.source-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.badge {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 10px;
+}
+
+.badge-primary  { background: rgba(201, 149, 42, 0.12); color: var(--wheat); }
+.badge-active   { background: rgba(61, 107, 84, 0.12);  color: var(--forest-light); }
+.badge-pending  { background: var(--cream-dark);         color: var(--text-muted); }
+.badge-official { background: rgba(26, 51, 40, 0.08);   color: var(--forest-mid); }
+
+/* Nom et organisation de la source */
+.source-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--forest);
+    margin-bottom: 4px;
+}
+
+.source-org {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Lien de téléchargement */
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--forest-light);
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    align-self: flex-start;
+    cursor: pointer;
+}
+
+.source-link:hover {
+    background: var(--forest);
+    color: var(--cream);
+    border-color: var(--forest);
+}
+
+.source-link.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   7. CORPS DE LA CARTE SOURCE
+   -------------------------------------------------------------------------- */
+.source-body {
+    padding: 0 24px 24px 30px;
+}
+
+.source-desc {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.source-desc strong {
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   8. GRILLE MÉTADONNÉES
+   -------------------------------------------------------------------------- */
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.meta-item {
+    background: var(--cream);
+    border-radius: 3px;
+    padding: 12px 14px;
+}
+
+.meta-label {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.meta-value {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--forest);
+}
+
+/* --------------------------------------------------------------------------
+   9. CHIPS INDICATEURS
+   -------------------------------------------------------------------------- */
+.indicators-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.indicator-chip {
+    font-size: 0.73rem;
+    padding: 4px 12px;
+    background: rgba(26, 51, 40, 0.06);
+    color: var(--forest-mid);
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   10. NOTE DE TERRAIN
+   -------------------------------------------------------------------------- */
+.field-note {
+    display: flex;
+    gap: 12px;
+    background: rgba(201, 149, 42, 0.08);
+    border-left: 3px solid var(--wheat);
+    border-radius: 0 3px 3px 0;
+    padding: 12px 16px;
+    margin-top: 16px;
+}
+
+.field-note-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.field-note p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   11. SECTION MÉTHODOLOGIE
+   -------------------------------------------------------------------------- */
+.method-section {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+}
+
+.method-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 28px;
+}
+
+.method-step {
+    background: var(--white);
+    padding: 24px;
+}
+
+.step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--border);
+    margin-bottom: 10px;
+}
+
+.step-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--forest);
+    margin-bottom: 8px;
+}
+
+.step-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}

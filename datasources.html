@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PREVICULTUR — Sources de données</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="datasources.css">
+</head>
+<body>
+
+    <nav>
+        <a class="nav-brand" href="index.html">PREVICULTUR</a>
+        <div class="nav-links">
+            <a href="index.html">Accueil</a>
+            <a href="dashboard.html">Tableau de bord</a>
+            <a href="glossaire.html">Glossaire</a>
+            <a href="datasources.html" class="active">Sources</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="page-header">
+            <span class="page-eyebrow">Transparence</span>
+            <h1>Sources de données</h1>
+            <p>Détail des bases de données publiques utilisées dans PREVICULTUR : origine, couverture, indicateurs extraits et méthodologie d'intégration.</p>
+        </div>
+
+        <!-- Bannière chiffres clés -->
+        <div class="method-banner">
+            <div class="method-item">
+                <div class="method-num">2</div>
+                <div class="method-label">Sources actives</div>
+                <div class="method-desc">Données officielles Ministère Agriculture &amp; FranceAgriMer</div>
+            </div>
+            <div class="method-divider"></div>
+            <div class="method-item">
+                <div class="method-num">2010–24</div>
+                <div class="method-label">Couverture temporelle</div>
+                <div class="method-desc">Séries longues avec données définitives jusqu'en 2023</div>
+            </div>
+            <div class="method-divider"></div>
+            <div class="method-item">
+                <div class="method-num">96</div>
+                <div class="method-label">Départements couverts</div>
+                <div class="method-desc">France métropolitaine, maille régionale disponible</div>
+            </div>
+            <div class="method-divider"></div>
+            <div class="method-item">
+                <div class="method-num">6+</div>
+                <div class="method-label">Cultures suivies</div>
+                <div class="method-desc">Blé tendre, blé dur, orge, maïs, colza, tournesol…</div>
+            </div>
+        </div>
+
+        <!-- SOURCE 1 : Agreste -->
+        <div class="sources-section">
+            <div class="section-heading">Sources de production</div>
+
+            <div class="source-card primary">
+                <div class="source-card-header">
+                    <div class="source-color-bar"></div>
+                    <div class="source-header-content">
+                        <div class="source-title-area">
+                            <div class="source-badges">
+                                <span class="badge badge-primary">Source primaire</span>
+                                <span class="badge badge-active">Actif</span>
+                                <span class="badge badge-official">Officiel</span>
+                            </div>
+                            <div class="source-name">Agreste — Séries Longues SAA</div>
+                            <div class="source-org">Ministère de l'Agriculture et de la Souveraineté Alimentaire (MASA)</div>
+                        </div>
+                        <a href="https://agreste.agriculture.gouv.fr/agreste-web/download/publication/publie/SAA-SeriesLongues/SAA_2010-2024-d%C3%A9finitives_donnees-DepartementalesetRegionales.zip"
+                           class="source-link" target="_blank" rel="noopener">Télécharger ↗</a>
+                    </div>
+                </div>
+                <div class="source-body">
+                    <p class="source-desc">
+                        La <strong>Statistique Agricole Annuelle (SAA)</strong>, publiée par Agreste, constitue la référence nationale pour les données de production végétale. Cette base fournit, pour chaque département et région, les surfaces cultivées, les productions totales et les rendements moyens par type de culture, de 2010 à 2024.
+                        <br><br>
+                        Les données 2010–2023 sont <strong>définitives</strong> (validées après enquêtes de terrain). Les données 2024 sont <strong>semi-définitives</strong> et susceptibles de légères révisions. La mise à jour est annuelle, généralement publiée au printemps suivant la récolte.
+                    </p>
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-label">Producteur</div>
+                            <div class="meta-value">Agreste / MASA</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Couverture temporelle</div>
+                            <div class="meta-value">2010 – 2024</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Maille géographique</div>
+                            <div class="meta-value">Département &amp; Région</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Format</div>
+                            <div class="meta-value">ZIP / XLSX</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Fréquence</div>
+                            <div class="meta-value">Annuelle</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Licence</div>
+                            <div class="meta-value">Données publiques (Etalab)</div>
+                        </div>
+                    </div>
+                    <div class="meta-label">Indicateurs extraits</div>
+                    <div class="indicators-list">
+                        <span class="indicator-chip">Surface cultivée (ha)</span>
+                        <span class="indicator-chip">Production (tonnes)</span>
+                        <span class="indicator-chip">Rendement (t/ha)</span>
+                        <span class="indicator-chip">Blé tendre</span>
+                        <span class="indicator-chip">Blé dur</span>
+                        <span class="indicator-chip">Orge</span>
+                        <span class="indicator-chip">Maïs grain</span>
+                        <span class="indicator-chip">Colza</span>
+                        <span class="indicator-chip">Tournesol</span>
+                        <span class="indicator-chip">Autres céréales</span>
+                    </div>
+                    <div class="field-note">
+                        <span class="field-note-icon">ℹ</span>
+                        <p>Les données de <strong>rentabilité (€/ha)</strong> utilisées dans PREVICULTUR sont calculées à partir des rendements SAA croisés avec des données de prix et de charges issues de références RICA. Elles constituent une estimation indicative et non une statistique officielle publiée.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOURCE 2 : FranceAgriMer -->
+        <div class="sources-section">
+            <div class="section-heading">Sources de stocks</div>
+
+            <div class="source-card">
+                <div class="source-card-header">
+                    <div class="source-color-bar"></div>
+                    <div class="source-header-content">
+                        <div class="source-title-area">
+                            <div class="source-badges">
+                                <span class="badge badge-active">Actif</span>
+                                <span class="badge badge-official">Officiel</span>
+                            </div>
+                            <div class="source-name">FranceAgriMer — Histogrammes Stocks &amp; Collecte</div>
+                            <div class="source-org">Établissement national des produits de l'agriculture et de la mer</div>
+                        </div>
+                        <a href="https://visionet.franceagrimer.fr/Pages/OpenDocument.aspx?fileurl=SeriesChronologiques%2fproductions%20vegetales%2fgrandes%20cultures%2fcollecte%2cstocks%2cd%c3%a9p%c3%b4ts%2fSCR-GRC-histDEP_collecte_stock_depuis_2000-C25.zip&telechargersanscomptage=oui"
+                           class="source-link" target="_blank" rel="noopener">Télécharger ↗</a>
+                    </div>
+                </div>
+                <div class="source-body">
+                    <p class="source-desc">
+                        <strong>FranceAgriMer</strong> est l'organisme public chargé d'animer les filières agricoles françaises. Sa base de données sur les stocks et la collecte des grandes cultures fournit des séries mensuelles depuis 2000, couvrant les entrées en stockage (collecte) et les niveaux de stocks dans les organismes stockeurs agréés (coopératives, négociants, silos portuaires).
+                        <br><br>
+                        Ces données permettent de suivre l'équilibre offre/demande entre deux campagnes. Elles sont déclinées par <strong>département de dépôt</strong>, offrant une granularité géographique fine pour analyser les flux logistiques de grains.
+                    </p>
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-label">Producteur</div>
+                            <div class="meta-value">FranceAgriMer</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Couverture temporelle</div>
+                            <div class="meta-value">Depuis 2000 (mensuel)</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Maille géographique</div>
+                            <div class="meta-value">Département de dépôt</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Format</div>
+                            <div class="meta-value">ZIP / XLSX</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Fréquence</div>
+                            <div class="meta-value">Mensuelle</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Licence</div>
+                            <div class="meta-value">Données publiques</div>
+                        </div>
+                    </div>
+                    <div class="meta-label">Indicateurs extraits</div>
+                    <div class="indicators-list">
+                        <span class="indicator-chip">Stocks fin de mois (kT)</span>
+                        <span class="indicator-chip">Collecte mensuelle (kT)</span>
+                        <span class="indicator-chip">Blé tendre</span>
+                        <span class="indicator-chip">Blé dur</span>
+                        <span class="indicator-chip">Orge</span>
+                        <span class="indicator-chip">Maïs</span>
+                        <span class="indicator-chip">Colza</span>
+                        <span class="indicator-chip">Triticale</span>
+                    </div>
+                    <div class="field-note">
+                        <span class="field-note-icon">ℹ</span>
+                        <p>Les stocks FranceAgriMer reflètent les volumes déposés chez les <strong>organismes stockeurs agréés</strong>. Une partie de la production est auto-consommée à la ferme ou stockée hors circuit déclaré, ce qui implique que les niveaux publiés sous-estiment légèrement les disponibilités totales.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOURCE 3 : Cotations (à venir) -->
+        <div class="sources-section">
+            <div class="section-heading">Sources à venir</div>
+
+            <div class="source-card pending">
+                <div class="source-card-header">
+                    <div class="source-color-bar"></div>
+                    <div class="source-header-content">
+                        <div class="source-title-area">
+                            <div class="source-badges">
+                                <span class="badge badge-pending">En cours d'intégration</span>
+                            </div>
+                            <div class="source-name">Cotations de marché — Prix des céréales</div>
+                            <div class="source-org">Euronext / FranceAgriMer Cotations</div>
+                        </div>
+                        <span class="source-link disabled">Bientôt disponible</span>
+                    </div>
+                </div>
+                <div class="source-body">
+                    <p class="source-desc">
+                        L'intégration de données de <strong>prix de marché</strong> (cotations Euronext pour le blé tendre et le maïs, cotations FranceAgriMer pour l'orge et le colza) est en cours de développement. Ces données permettront de calculer la <strong>rentabilité effective</strong> par culture de manière plus précise, en croisant le rendement observé avec le prix effectivement perçu.
+                    </p>
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-label">Producteur</div>
+                            <div class="meta-value">Euronext / FranceAgriMer</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Couverture visée</div>
+                            <div class="meta-value">2010 – présent</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Fréquence</div>
+                            <div class="meta-value">Quotidienne / Hebdomadaire</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Statut</div>
+                            <div class="meta-value">Développement Q1 2025</div>
+                        </div>
+                    </div>
+                    <div class="meta-label">Indicateurs prévus</div>
+                    <div class="indicators-list">
+                        <span class="indicator-chip">Prix spot (€/t)</span>
+                        <span class="indicator-chip">Prix moyen campagne</span>
+                        <span class="indicator-chip">Volatilité historique</span>
+                        <span class="indicator-chip">Écarts régionaux (bases)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Méthodologie -->
+        <div class="method-section">
+            <div class="section-heading">Méthodologie d'intégration</div>
+            <div class="method-steps">
+                <div class="method-step">
+                    <div class="step-num">01</div>
+                    <div class="step-title">Extraction</div>
+                    <p class="step-desc">Téléchargement des fichiers ZIP depuis les portails officiels Agreste et FranceAgriMer.</p>
+                </div>
+                <div class="method-step">
+                    <div class="step-num">02</div>
+                    <div class="step-title">Nettoyage</div>
+                    <p class="step-desc">Harmonisation des codes géographiques INSEE, gestion des valeurs manquantes et des changements de nomenclature régionale (réforme 2016).</p>
+                </div>
+                <div class="method-step">
+                    <div class="step-num">03</div>
+                    <div class="step-title">Agrégation</div>
+                    <p class="step-desc">Calcul des agrégats régionaux à partir des données départementales, pondération par les surfaces cultivées pour les rendements moyens.</p>
+                </div>
+                <div class="method-step">
+                    <div class="step-num">04</div>
+                    <div class="step-title">Export JSON</div>
+                    <p class="step-desc">Conversion en fichiers JSON optimisés pour D3.js, indexés par culture, année et code géographique.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>PREVICULTUR — <strong>Dimitri Novareze</strong> &amp; <strong>Jean-Joseph Tampé</strong> — 2024</p>
+        <p>
+            <a href="glossaire.html">Glossaire</a>
+            &ensp;·&ensp;
+            <a href="dashboard.html">Tableau de bord</a>
+        </p>
+    </footer>
+
+</body>
+</html>

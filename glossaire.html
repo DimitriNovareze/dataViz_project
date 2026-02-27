@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PREVICULTUR — Glossaire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="glossaire.css">
+</head>
+<body>
+
+    <nav>
+        <a class="nav-brand" href="index.html">PREVICULTUR</a>
+        <div class="nav-links">
+            <a href="index.html">Accueil</a>
+            <a href="dashboard.html">Tableau de bord</a>
+            <a href="glossaire.html" class="active">Glossaire</a>
+            <a href="datasources.html">Sources</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="page-header">
+            <span class="page-eyebrow">Référentiel</span>
+            <h1>Glossaire</h1>
+            <p>Définitions des indicateurs, unités, concepts agricoles et termes de visualisation utilisés dans PREVICULTUR.</p>
+        </div>
+
+        <div class="search-wrap">
+            <input class="search-input" type="text" id="search" placeholder="Rechercher un terme…">
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-cat="all">Tous</button>
+            <button class="tab" data-cat="economie">Économie</button>
+            <button class="tab" data-cat="culture">Cultures</button>
+            <button class="tab" data-cat="geographie">Géographie</button>
+            <button class="tab" data-cat="donnees">Données &amp; Viz</button>
+        </div>
+
+        <!-- ÉCONOMIE -->
+        <div class="terms-section" id="section-economie">
+            <div class="section-heading">Indicateurs économiques</div>
+
+            <div class="term-card cat-economie" data-cat="economie" data-term="rentabilité">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Rentabilité</span>
+                        <span class="term-tag">Économie</span>
+                    </div>
+                    <p class="term-def">Différence entre les <strong>recettes de vente</strong> d'une culture et ses <strong>charges de production</strong> (semences, engrais, produits phytosanitaires, mécanisation, main-d'œuvre). Elle mesure la marge nette dégagée par hectare cultivé. Une rentabilité positive signifie que la culture couvre ses coûts et génère un bénéfice.</p>
+                    <span class="term-unit">Unité : €/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-economie" data-cat="economie" data-term="cotation prix">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Cotation / Prix de marché</span>
+                        <span class="term-tag">Économie</span>
+                    </div>
+                    <p class="term-def">Prix auquel une culture agricole est échangée sur les marchés à terme (Euronext pour le blé et le maïs, par exemple). Les cotations fluctuent selon l'offre mondiale, les conditions climatiques, les politiques agricoles et la demande des industries de transformation.</p>
+                    <span class="term-unit">Unité : €/tonne</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-economie" data-cat="economie" data-term="marge brute charges">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Marge brute standard</span>
+                        <span class="term-tag">Économie</span>
+                    </div>
+                    <p class="term-def">Indicateur normalisé calculé par le Ministère de l'Agriculture permettant de comparer l'intensité économique de différentes productions sur une même surface. Elle est calculée en soustrayant les charges spécifiques (hors charges de mécanisation et main-d'œuvre) du produit brut.</p>
+                    <span class="term-unit">Unité : €/ha</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CULTURES -->
+        <div class="terms-section" id="section-culture">
+            <div class="section-heading">Cultures &amp; Productions</div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="blé tendre froment">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Blé tendre</span>
+                        <span class="term-tag">Culture</span>
+                        <span class="term-abbrev">Triticum aestivum</span>
+                    </div>
+                    <p class="term-def">Principale céréale cultivée en France, utilisée pour la fabrication de farine boulangère et d'aliments pour le bétail. Semé à l'automne (blé d'hiver), il est récolté en juillet. La France est l'un des premiers exportateurs mondiaux de blé tendre.</p>
+                    <span class="term-unit">Rendement moyen France : 7–8 t/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="blé dur semoule pasta">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Blé dur</span>
+                        <span class="term-tag">Culture</span>
+                        <span class="term-abbrev">Triticum durum</span>
+                    </div>
+                    <p class="term-def">Variété de blé à grains durs utilisée pour la production de semoule et de pâtes alimentaires. Plus exigeant en chaleur que le blé tendre, il est principalement cultivé dans le Sud de la France.</p>
+                    <span class="term-unit">Rendement moyen France : 5–6 t/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="orge bière fourrage">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Orge</span>
+                        <span class="term-tag">Culture</span>
+                        <span class="term-abbrev">Hordeum vulgare</span>
+                    </div>
+                    <p class="term-def">Céréale utilisée pour la production de malt (bière, whisky) et pour l'alimentation animale. L'orge de printemps est valorisée en brasserie ; l'orge d'hiver sert surtout à l'alimentation du bétail. Deuxième céréale française en surface cultivée.</p>
+                    <span class="term-unit">Rendement moyen France : 6–7 t/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="maïs grain ensilage">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Maïs grain</span>
+                        <span class="term-tag">Culture</span>
+                        <span class="term-abbrev">Zea mays</span>
+                    </div>
+                    <p class="term-def">Cultivé principalement dans le Sud-Ouest et le Grand Est, le maïs grain est destiné à l'alimentation animale et à diverses industries (amidon, bioéthanol). Culture estivale nécessitant une irrigation importante dans de nombreuses régions françaises.</p>
+                    <span class="term-unit">Rendement moyen France : 9–10 t/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="colza huile biodiesel">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Colza</span>
+                        <span class="term-tag">Culture</span>
+                        <span class="term-abbrev">Brassica napus</span>
+                    </div>
+                    <p class="term-def">Oléagineux principal cultivé en France, utilisé pour la production d'huile alimentaire et de biodiesel. Semé à l'automne, il fleurit en avril et se récolte en juillet. Sa teneur en huile avoisine 40–45% du poids du grain.</p>
+                    <span class="term-unit">Rendement moyen France : 3,5–4 t/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="tournesol huile soleil">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Tournesol</span>
+                        <span class="term-tag">Culture</span>
+                        <span class="term-abbrev">Helianthus annuus</span>
+                    </div>
+                    <p class="term-def">Oléagineux d'été cultivé principalement dans le Centre et le Sud-Ouest. Valorisé pour son huile et ses tourteaux destinés à l'alimentation animale. Culture moins exigeante en intrants que le colza, avec une bonne résistance à la sécheresse.</p>
+                    <span class="term-unit">Rendement moyen France : 2–2,5 t/ha</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="rendement quintaux tonne hectare">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Rendement</span>
+                        <span class="term-tag">Culture</span>
+                    </div>
+                    <p class="term-def">Quantité de grains produite par unité de surface. C'est l'indicateur clé de la performance agronomique. Il est influencé par la variété cultivée, les conditions climatiques, la qualité du sol et les pratiques culturales (fertilisation, protection phytosanitaire).</p>
+                    <span class="term-unit">Unité : t/ha ou q/ha (1 t = 10 q)</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-culture" data-cat="culture" data-term="saison culturale agricole campagne">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Saison culturale / Campagne</span>
+                        <span class="term-tag">Culture</span>
+                    </div>
+                    <p class="term-def">Période de référence agricole qui ne coïncide pas avec l'année civile. Une campagne blé couvre par exemple le cycle de l'automne (semis) au mois de juillet suivant (récolte). Les campagnes sont numérotées avec deux années (ex : 2022/2023).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- GÉOGRAPHIE -->
+        <div class="terms-section" id="section-geographie">
+            <div class="section-heading">Géographie &amp; Territoires</div>
+
+            <div class="term-card cat-geographie" data-cat="geographie" data-term="SAU surface agricole utile">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">SAU</span>
+                        <span class="term-tag">Géographie</span>
+                        <span class="term-abbrev">Surface Agricole Utile</span>
+                    </div>
+                    <p class="term-def">Superficie totale d'une exploitation agricole consacrée à la production végétale et animale. Elle comprend les terres arables, les surfaces toujours en herbe, les cultures permanentes (vignes, vergers) et les jardins familiaux. La France compte environ <strong>27 millions d'hectares</strong> de SAU.</p>
+                    <span class="term-unit">Unité : hectares (ha)</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-geographie" data-cat="geographie" data-term="département région NUTS">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Maille départementale / régionale</span>
+                        <span class="term-tag">Géographie</span>
+                    </div>
+                    <p class="term-def">Les données agricoles sont collectées à deux échelons : les <strong>96 départements</strong> métropolitains (niveau NUTS-3) et les <strong>13 régions</strong> (niveau NUTS-2). PREVICULTUR permet de naviguer de l'un à l'autre par un simple clic sur la carte.</p>
+                </div>
+            </div>
+
+            <div class="term-card cat-geographie" data-cat="geographie" data-term="SAA statistique agricole annuelle">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">SAA</span>
+                        <span class="term-tag">Géographie</span>
+                        <span class="term-abbrev">Statistique Agricole Annuelle</span>
+                    </div>
+                    <p class="term-def">Enquête annuelle menée par le Ministère de l'Agriculture (via Agreste) qui recense les surfaces, productions et rendements par culture, département et région. C'est la principale source de données utilisée dans PREVICULTUR pour les indicateurs de production.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DONNÉES & VIZ -->
+        <div class="terms-section" id="section-donnees">
+            <div class="section-heading">Données &amp; Visualisation</div>
+
+            <div class="term-card cat-donnees" data-cat="donnees" data-term="carte choroplèthe couleur">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Carte Choroplèthe</span>
+                        <span class="term-tag">Visualisation</span>
+                    </div>
+                    <p class="term-def">Représentation cartographique où chaque zone géographique est colorée selon la valeur d'une variable quantitative. Plus la couleur est foncée, plus la valeur est élevée. Utilisée dans PREVICULTUR pour représenter la production agricole par département ou région.</p>
+                </div>
+            </div>
+
+            <div class="term-card cat-donnees" data-cat="donnees" data-term="stock mensuel collecte dépôt">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Stock mensuel</span>
+                        <span class="term-tag">Données</span>
+                    </div>
+                    <p class="term-def">Volume de grains conservés dans les organismes stockeurs (coopératives, négoces, silos) à la fin de chaque mois. Publié par <strong>FranceAgriMer</strong>, il permet de suivre la disponibilité des grains entre deux récoltes. Des stocks faibles exercent une pression haussière sur les prix.</p>
+                    <span class="term-unit">Unité : milliers de tonnes (kT)</span>
+                </div>
+            </div>
+
+            <div class="term-card cat-donnees" data-cat="donnees" data-term="tour eiffel pyramide unité comparaison">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Unités de comparaison</span>
+                        <span class="term-tag">Visualisation</span>
+                    </div>
+                    <p class="term-def">Pour rendre les volumes intuitifs, PREVICULTUR propose deux unités alternatives : la <strong>Tour Eiffel</strong> (~7 300 tonnes) et la <strong>Pyramide de Khéops</strong> (~5,9 millions de tonnes). Ces références permettent de contextualiser des quantités abstraites comme plusieurs millions de tonnes de blé.</p>
+                </div>
+            </div>
+
+            <div class="term-card cat-donnees" data-cat="donnees" data-term="série temporelle historique tendance">
+                <div class="term-accent"></div>
+                <div class="term-body">
+                    <div class="term-header">
+                        <span class="term-name">Série temporelle</span>
+                        <span class="term-tag">Visualisation</span>
+                    </div>
+                    <p class="term-def">Représentation graphique de l'évolution d'un indicateur (production, rentabilité, stock) au fil du temps. Dans PREVICULTUR, les séries s'étendent de 2010 à 2024, permettant d'identifier des tendances de long terme, des cycles saisonniers et l'impact d'événements exceptionnels.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>PREVICULTUR — <strong>Dimitri Novareze</strong> &amp; <strong>Jean-Joseph Tampé</strong> — 2024</p>
+        <p>
+            <a href="datasources.html">Sources des données</a>
+            &ensp;·&ensp;
+            <a href="dashboard.html">Tableau de bord</a>
+        </p>
+    </footer>
+
+    <script>
+        const searchInput = document.getElementById('search');
+        searchInput.addEventListener('input', filterTerms);
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                filterTerms();
+            });
+        });
+
+        function filterTerms() {
+            const query = searchInput.value.toLowerCase().trim();
+            const activeTab = document.querySelector('.tab.active').dataset.cat;
+
+            document.querySelectorAll('.term-card').forEach(card => {
+                const catMatch = activeTab === 'all' || card.dataset.cat === activeTab;
+                const searchMatch = !query || card.dataset.term.includes(query) || card.textContent.toLowerCase().includes(query);
+                card.style.display = (catMatch && searchMatch) ? '' : 'none';
+            });
+
+            document.querySelectorAll('.terms-section').forEach(section => {
+                const visible = [...section.querySelectorAll('.term-card')].some(c => c.style.display !== 'none');
+                section.style.display = visible ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

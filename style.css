@@ -1,235 +1,415 @@
 /* ==========================================================================
-   1. VARIABLES & GLOBALES
+   STYLE.CSS — Dashboard PREVICULTUR (dashboard.html)
    ========================================================================== */
-:root {
-    --primary: #2c3e50;
-    --accent: #27ae60;
-    --bg: #f4f7f6;
-    --text: #333;
-}
 
+/* --------------------------------------------------------------------------
+   1. LAYOUT GLOBAL
+   La nav de base.css est position:fixed — on compense avec padding-top.
+   -------------------------------------------------------------------------- */
 body {
-    margin: 0;
-    font-family: 'Roboto', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
+    background: var(--cream);
     height: 100vh;
     overflow: hidden;
 }
 
-.dashboard-container {
+.app-body {
     display: flex;
-    height: 100vh;
+    position: fixed;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
 }
 
-/* ==========================================================================
-   2. SIDEBAR & CONTROLES
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   3. SIDEBAR
+   -------------------------------------------------------------------------- */
 .sidebar {
     width: 300px;
-    background: white;
-    padding: 2rem;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    background: var(--white);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    z-index: 10;
+    overflow-y: auto;
+    flex-shrink: 0;
 }
 
-.header h1 { 
-    font-size: 1.5rem; 
-    color: var(--primary); 
-    margin: 0; 
+.sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--forest);
+    flex-shrink: 0;
 }
 
-.header p { 
-    color: #7f8c8d; 
-    font-size: 0.9rem; 
-    margin-top: 5px; 
-}
-
-.controls { 
-    margin-top: 2rem; 
-    flex-grow: 1; 
-}
-
-.control-group { 
-    margin-bottom: 1.5rem; 
-}
-
-.control-group label { 
-    display: block; 
-    font-weight: 500; 
-    margin-bottom: 0.5rem; 
-    font-size: 0.9rem; 
-}
-
-select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+.sidebar-header h1 {
+    font-family: 'Playfair Display', serif;
     font-size: 1rem;
-    background: #fff;
+    font-weight: 700;
+    color: var(--cream);
+    letter-spacing: 0.02em;
 }
 
-/* Bouton Retour & Fil d'Ariane */
+.sidebar-header p {
+    font-size: 0.72rem;
+    color: rgba(245, 241, 232, 0.55);
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------------------
+   4. CONTRÔLES (Selects)
+   -------------------------------------------------------------------------- */
+.controls {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.control-group {
+    margin-bottom: 12px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-group label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.control-group select {
+    width: 100%;
+    padding: 7px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text);
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B6259'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.control-group select:focus {
+    outline: none;
+    border-color: var(--forest-light);
+}
+
+/* --------------------------------------------------------------------------
+   5. BREADCRUMB
+   -------------------------------------------------------------------------- */
 #breadcrumb {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #eee;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
     animation: fadeIn 0.3s ease;
 }
 
+#breadcrumb.hidden {
+    display: none;
+}
+
 #btn-back {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    width: 100%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    transition: background 0.2s;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    color: var(--forest);
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-#btn-back:hover { 
-    background: #34495e; 
+#btn-back:hover {
+    background: var(--cream);
+    border-color: var(--forest-light);
 }
 
-#region-title { 
-    text-align: center; 
-    margin-top: 10px; 
-    font-weight: bold; 
-    color: var(--accent); 
+#region-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--forest-mid);
 }
 
-/* ==========================================================================
-   3. CARTE & INTERACTIVITÉ
-   ========================================================================== */
-.map-wrapper { 
-    flex-grow: 1; 
-    position: relative; 
-    background: #eef2f3; 
-    /* NOUVEAU : On utilise Flexbox pour empiler la carte et le chart */
+/* --------------------------------------------------------------------------
+   6. TABLEAU TOP RENDEMENTS — dans la sidebar, sous les filtres
+   -------------------------------------------------------------------------- */
+.top-yields-container {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+}
+
+.top-yields-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.top-yields-header label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.btn-small {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--cream);
+    color: var(--forest);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-small:hover {
+    background: var(--forest);
+    color: var(--white);
+}
+
+.btn-small.active {
+    background: var(--forest-light);
+    color: var(--white);
+    border-color: var(--forest-light);
+}
+
+.table-wrapper {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+}
+
+#yield-table {
+    width: 100%;
+    font-size: 0.75rem;
+    border-collapse: collapse;
+    background: var(--white);
+}
+
+#yield-table thead {
+    position: sticky;
+    top: 0;
+    background: var(--cream-dark);
+}
+
+#yield-table th,
+#yield-table td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+#yield-table th {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+#yield-table tr:last-child td {
+    border-bottom: none;
+}
+
+#yield-table tbody tr:hover {
+    background: var(--cream);
+}
+
+/* --------------------------------------------------------------------------
+   7. ZONE CARTE
+   -------------------------------------------------------------------------- */
+.map-wrapper {
+    flex: 1;
     display: flex;
     flex-direction: column;
-}
-
-#map-container { 
-    width: 100%; 
-    flex-grow: 1; /* Prend automatiquement toute la place AU-DESSUS du chart */
     overflow: hidden;
+    background: #eef2f3;
+    position: relative; /* Nécessaire pour le positionnement absolu de la légende */
 }
 
+#map-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
 
-/* ==========================================================================
-   3. CARTE & INTERACTIVITÉ
-   ========================================================================== */
-
-/* Silhouette globale de fond */
+/* Silhouette globale */
 .map-outline {
-    fill: rgb(255, 255, 255);
+    fill: var(--white);
     stroke: rgb(0, 0, 0);
-    stroke-width: 3px; /* 3px débordent à l'extérieur, l'intérieur sera caché */
+    stroke-width: 3px;
     stroke-linejoin: round;
-    vector-effect: non-scaling-stroke; /* Reste à 3px même au zoom max ! */
-    pointer-events: none; /* Ignore la souris */
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
 }
 
-/* Zones internes (Régions ou Départements) */
+/* Zones (régions / départements) */
 .map-area {
-    stroke: white; /* Bordure interne classique */
+    stroke: white;
     stroke-width: 1px;
-    vector-effect: non-scaling-stroke; /* Les frontières internes restent fines au zoom */
+    vector-effect: non-scaling-stroke;
     transition: fill 0.4s ease, stroke 0.2s;
     cursor: pointer;
 }
 
-.map-area:hover { 
-    stroke: #333; 
-    stroke-width: 2px; 
-    filter: brightness(0.9); 
+.map-area:hover {
+    stroke: #333;
+    stroke-width: 2px;
+    filter: brightness(0.9);
 }
 
+/* Étoiles rentabilité */
 .star {
-    fill: #FFD700;       
-    stroke: #333;        
+    fill: #FFD700;
+    stroke: #333;
     stroke-width: 0.5px;
-    pointer-events: none; /* Laisse le clic passer à travers vers la carte */
-    transition: transform 0.5s ease;        
-}
-
-/* Tooltip */
-.tooltip {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 0.9rem;
     pointer-events: none;
-    z-index: 100;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.5s ease;
 }
 
-/* ==========================================================================
-   4. LÉGENDE FLOTTANTE (En haut à droite)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   8. LÉGENDE FLOTTANTE (haut à droite sur la carte)
+   -------------------------------------------------------------------------- */
 .legend-container {
-    position: absolute; /* Sort l'élément du flux pour flotter sur la carte */
+    position: absolute;
     top: 20px;
     right: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.96);
+    padding: 16px 18px;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     z-index: 10;
-    width: 320px; /* Tu peux ajuster cette valeur (ex: 300px ou 340px) selon ton besoin */
-    box-sizing: border-box; /* Assure que les 20px de padding sont inclus dans les 320px */
-}
-
-.legend-container h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    color: var(--primary);
+    width: 280px;
+    box-sizing: border-box;
 }
 
 .legend-block {
-    margin-bottom: 10px;
+    margin-bottom: 14px;
+}
+
+.legend-block:last-child {
+    margin-bottom: 0;
+}
+
+.legend-block label,
+.legend-block > label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+}
+
+/* En-tête Production + select unité */
+.legend-prod-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+}
+
+.legend-prod-header label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+#select-unit {
+    padding: 3px 24px 3px 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    color: var(--text);
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236B6259'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    cursor: pointer;
+}
+
+#select-unit:focus {
+    outline: none;
+    border-color: var(--forest-light);
 }
 
 .legend-bar {
-    height: 12px;
-    background: linear-gradient(to right, #f7fcf5, #00441b); /* Dégradé de Verts */
-    border-radius: 6px;
-    margin: 5px 0;
-    border: 1px solid #ccc;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, var(--cream-dark), var(--forest));
+    margin-bottom: 4px;
 }
 
 .legend-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
-    color: #555;
+    font-size: 0.68rem;
+    color: var(--text-muted);
 }
 
+/* Bar chart dans la légende */
+.bar-chart-container {
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    margin-bottom: 14px;
+}
+
+#bar-chart-title {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 6px;
+}
+
+#bar-chart {
+    height: 150px;
+    width: 100%;
+}
+
+/* Légende taille (rentabilité) */
 #legend-size-container {
-    height: 60px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
 }
 
 .legend-star-icon {
@@ -238,159 +418,101 @@ select {
     stroke-width: 1px;
 }
 
-/* ==========================================================================
-   5. PANNEAU DU GRAPHIQUE (En bas)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   9. TOOLTIP
+   -------------------------------------------------------------------------- */
+.tooltip {
+    position: fixed;
+    background: var(--forest);
+    color: var(--cream);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    max-width: 220px;
+}
+
+/* --------------------------------------------------------------------------
+   10. PANNEAU GRAPHIQUE (bas)
+   -------------------------------------------------------------------------- */
 #chart-panel {
-    /* NOUVEAU : Fini le position:fixed, il se pose naturellement en bas */
-    position: relative;
-    width: 100%;
-    height: 200px;
-    flex-shrink: 0; 
-    
-    background: rgba(255, 255, 255, 0.95);
-    border-top: none; 
-    border-left: 1px solid #b4b4b4; 
-    padding: 10px 20px;
-    box-sizing: border-box; 
-    z-index: 50;
-    
-    /* Modifié : Ombre restreinte uniquement au bord supérieur */
-    box-shadow: 0 -10px 10px -10px rgba(0,0,0,0.15); 
-    
+    height: 220px;
+    border-top: 1px solid var(--border);
+    background: var(--white);
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 -8px 12px -8px rgba(0, 0, 0, 0.08);
 }
 
 .chart-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
+    justify-content: space-between;
+    padding: 12px 20px 8px;
+    border-bottom: 1px solid var(--border);
 }
 
-.chart-header h3 { 
-    margin: 0; 
-    font-size: 1rem; 
-    color: var(--primary); 
+#chart-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--forest);
+}
+
+.chart-toggles {
+    display: flex;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
 }
 
 .chart-toggles label {
-    margin-left: 15px;
-    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
     cursor: pointer;
-    color: #555;
+    transition: color 0.2s;
+}
+
+.chart-toggles label:hover {
+    color: var(--forest);
+}
+
+.chart-toggles input[type="radio"] {
+    accent-color: var(--forest-mid);
 }
 
 #line-chart {
-    flex-grow: 1;
-    width: 100%;
+    flex: 1;
+    padding: 4px 16px 8px;
     overflow: hidden;
 }
 
-/* Éléments internes du graphique SVG */
-.axis text { 
-    font-size: 10px; 
-    fill: #666; 
+/* Axes SVG */
+.axis text {
+    font-size: 10px;
+    fill: var(--text-muted);
 }
 
-.axis path, .axis line { 
-    stroke: #ddd; 
+.axis path,
+.axis line {
+    stroke: var(--border);
 }
 
-.line-path { 
-    fill: none; 
-    stroke-width: 2px; 
+.line-path {
+    fill: none;
+    stroke-width: 2px;
 }
 
-/* ==========================================================================
-   6. UTILITAIRES & ANIMATIONS
-   ========================================================================== */
-.hidden { 
-    display: none !important; 
-}
-
-@keyframes fadeIn { 
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    } 
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    } 
-}
-
-#line-chart {
-    flex-grow: 1;
-    width: 100%;
-    overflow: hidden;
-}
-
-/* Éléments internes du graphique SVG */
-.axis text { 
-    font-size: 10px; 
-    fill: #666; 
-}
-
-.axis path, .axis line { 
-    stroke: #ddd; 
-}
-
-.line-path { 
-    fill: none; 
-    stroke-width: 2px; 
-}
-
-/* Modification de la sidebar existante */
-.sidebar {
-    overflow-y: auto; /* Permet le défilement si l'écran est petit */
-}
-
-/* Styles pour le bouton Sans Filtre et le tableau */
-.btn-small {
-    background: #ecf0f1;
-    border: 1px solid #bdc3c7;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    color: #7f8c8d;
-    transition: all 0.2s;
-}
-
-.btn-small:hover {
-    background: #bdc3c7;
-    color: #333;
-}
-
-.btn-small.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-    font-weight: bold;
-}
-
-#yield-table td {
-    padding: 6px;
-    border-bottom: 1px solid #f1f2f6;
-    color: #444;
-}
-
-/* ==========================================================================
-   6. UTILITAIRES & ANIMATIONS
-   ========================================================================== */
-.hidden { 
-    display: none !important; 
-}
-
-@keyframes fadeIn { 
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    } 
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    } 
+/* --------------------------------------------------------------------------
+   11. ANIMATIONS
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }

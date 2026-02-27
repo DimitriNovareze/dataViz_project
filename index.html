@@ -3,57 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PREVICULTUR - Accueil</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>PREVICULTUR — Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="base.css">
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
 
-    <div class="splash-card">
-        
-        <header class="splash-header">
-            <h1>PREVICULTUR</h1>
-            <h2>Rentabilité et production agricole en France</h2>
-            <p class="authors">Un projet de Dimitri Novareze & Jean-Joseph Tampé</p>
-        </header>
-
-        <div class="splash-description">
-            <p>Explorez visuellement la dynamique agricole française. Identifiez les régions les plus productives, analysez l'évolution temporelle et comparez la rentabilité des cultures.</p>
+    <nav>
+        <a class="nav-brand" href="index.html">PREVICULTUR</a>
+        <div class="nav-links">
+            <a href="index.html" class="active">Accueil</a>
+            <a href="dashboard.html">Tableau de bord</a>
+            <a href="glossaire.html">Glossaire</a>
+            <a href="datasources.html">Sources</a>
         </div>
+    </nav>
 
-        <div class="splash-features">
-            <div class="feature-item">
-                <span class="feature-icon">🗺️</span>
-                <h4>Carte Choroplèthe</h4>
-                <p>Analyse Régionale & Départementale</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">📈</span>
-                <h4>Séries Temporelles</h4>
-                <p>Évolution Prod. / Rentabilité / Stocks</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">📊</span>
-                <h4>Comparateur</h4>
-                <p>Cultures dominantes par zone</p>
-            </div>
-        </div>
+    <div class="deco-bar"></div>
+    <svg class="field-lines" viewBox="0 0 300 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+            <pattern id="lines" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="30" x2="30" y2="0" stroke="#1A3328" stroke-width="1"/>
+            </pattern>
+        </defs>
+        <rect width="300" height="800" fill="url(#lines)"/>
+    </svg>
 
-        <div class="splash-cta">
-            <a href="dashboard.html" class="btn-launch">Lancer l'application PREVICULTUR</a>
-        </div>
-
-       <footer class="splash-footer">
-            <p>
-                <strong>Sources des données :</strong> 
-                <a href="https://agreste.agriculture.gouv.fr/agreste-web/download/publication/publie/SAA-SeriesLongues/SAA_2010-2024-d%C3%A9finitives_donnees-DepartementalesetRegionales.zip" target="_blank" rel="noopener noreferrer">Agreste (Séries Longues SAA)</a> | 
-                <a href="https://visionet.franceagrimer.fr/Pages/OpenDocument.aspx?fileurl=SeriesChronologiques%2fproductions%20vegetales%2fgrandes%20cultures%2fcollecte%2cstocks%2cd%c3%a9p%c3%b4ts%2fSCR-GRC-histDEP_collecte_stock_depuis_2000-C25.zip&telechargersanscomptage=oui" target="_blank" rel="noopener noreferrer">FranceAgriMer (Stocks)</a> | 
-                <a href="#" target="_blank">Cotations (À venir)</a>
+    <div class="hero">
+        <div class="hero-main">
+            <span class="hero-eyebrow">Data Visualisation Agricole</span>
+            <h1 class="hero-title">PREVI<em>CULTUR</em></h1>
+            <p class="hero-subtitle">Rentabilité &amp; production agricole en France</p>
+            <p class="hero-desc">
+                Explorez la dynamique agricole française par région et département. Identifiez les zones les plus productives, analysez l'évolution temporelle des cultures et comparez leur rentabilité.
             </p>
-            <p style="margin-top: 5px;">Projet de Data-Visualisation 2024</p>
-        </footer>
+            <a href="dashboard.html" class="btn-launch">Ouvrir le tableau de bord</a>
+        </div>
 
+        <div class="features-strip">
+            <div class="feature-card">
+                <div class="feature-number">01</div>
+                <div class="feature-title">Carte Choroplèthe</div>
+                <p class="feature-desc">Analyse régionale et départementale interactive avec drill-down en un clic.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-number">02</div>
+                <div class="feature-title">Séries Temporelles</div>
+                <p class="feature-desc">Évolution de la production, de la rentabilité et des stocks depuis 2010.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-number">03</div>
+                <div class="feature-title">Comparateur</div>
+                <p class="feature-desc">Cultures dominantes par zone, top rendements et unités comparatives.</p>
+            </div>
+        </div>
     </div>
+
+    <footer class="splash-footer">
+        <p>Un projet de <strong>Dimitri Novareze</strong> &amp; <strong>Jean-Joseph Tampé</strong> — Data Visualisation 2024</p>
+        <p>
+            <a href="datasources.html">Sources des données</a>
+            &ensp;·&ensp;
+            <a href="glossaire.html">Glossaire</a>
+            &ensp;·&ensp;
+            <a href="https://agreste.agriculture.gouv.fr" target="_blank" rel="noopener">Agreste</a>
+            &ensp;·&ensp;
+            <a href="https://visionet.franceagrimer.fr" target="_blank" rel="noopener">FranceAgriMer</a>
+        </p>
+    </footer>
 
 </body>
 </html>
