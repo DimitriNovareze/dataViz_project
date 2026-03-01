@@ -27,10 +27,9 @@
             <p>Détail des bases de données publiques utilisées dans PREVICULTUR : origine, couverture, indicateurs extraits et méthodologie d'intégration.</p>
         </div>
 
-        <!-- Bannière chiffres clés -->
         <div class="method-banner">
             <div class="method-item">
-                <div class="method-num">2</div>
+                <div class="method-num">3</div>
                 <div class="method-label">Sources actives</div>
                 <div class="method-desc">Données officielles Ministère Agriculture &amp; FranceAgriMer</div>
             </div>
@@ -54,7 +53,6 @@
             </div>
         </div>
 
-        <!-- SOURCE 1 : Agreste -->
         <div class="sources-section">
             <div class="section-heading">Sources de production</div>
 
@@ -128,7 +126,6 @@
             </div>
         </div>
 
-        <!-- SOURCE 2 : FranceAgriMer -->
         <div class="sources-section">
             <div class="section-heading">Sources de stocks</div>
 
@@ -199,58 +196,55 @@
             </div>
         </div>
 
-        <!-- SOURCE 3 : Cotations (à venir) -->
         <div class="sources-section">
-            <div class="section-heading">Sources à venir</div>
+            <div class="section-heading">Sources de prix</div>
 
-            <div class="source-card pending">
+            <div class="source-card">
                 <div class="source-card-header">
                     <div class="source-color-bar"></div>
                     <div class="source-header-content">
                         <div class="source-title-area">
                             <div class="source-badges">
-                                <span class="badge badge-pending">En cours d'intégration</span>
+                                <span class="badge badge-active">Actif</span>
+                                <span class="badge badge-official">Officiel</span>
                             </div>
-                            <div class="source-name">Cotations de marché — Prix des céréales</div>
-                            <div class="source-org">Euronext / FranceAgriMer Cotations</div>
+                            <div class="source-name">FranceAgriMer — Cotations des céréales</div>
+                            <div class="source-org">Établissement national des produits de l'agriculture et de la mer</div>
                         </div>
-                        <span class="source-link disabled">Bientôt disponible</span>
+                        <a href="https://visionet.franceagrimer.fr/Pages/SeriesChronologiques.aspx?menuurl=SeriesChronologiques/productions%20vegetales/grandes%20cultures/cotations"
+                           class="source-link" target="_blank" rel="noopener">Consulter ↗</a>
                     </div>
                 </div>
                 <div class="source-body">
                     <p class="source-desc">
-                        L'intégration de données de <strong>prix de marché</strong> (cotations Euronext pour le blé tendre et le maïs, cotations FranceAgriMer pour l'orge et le colza) est en cours de développement. Ces données permettront de calculer la <strong>rentabilité effective</strong> par culture de manière plus précise, en croisant le rendement observé avec le prix effectivement perçu.
+                        L'intégration des données de <strong>prix de marché</strong> via les cotations FranceAgriMer permet de suivre l'évolution des prix des grandes cultures. Ces données permettent de calculer la <strong>rentabilité effective</strong> par culture de manière précise, en croisant le rendement observé avec le prix effectivement perçu sur les différents marchés.
                     </p>
                     <div class="meta-grid">
                         <div class="meta-item">
                             <div class="meta-label">Producteur</div>
-                            <div class="meta-value">Euronext / FranceAgriMer</div>
+                            <div class="meta-value">FranceAgriMer</div>
                         </div>
                         <div class="meta-item">
-                            <div class="meta-label">Couverture visée</div>
-                            <div class="meta-value">2010 – présent</div>
+                            <div class="meta-label">Couverture temporelle</div>
+                            <div class="meta-value">Séries historiques</div>
                         </div>
                         <div class="meta-item">
                             <div class="meta-label">Fréquence</div>
                             <div class="meta-value">Quotidienne / Hebdomadaire</div>
                         </div>
                         <div class="meta-item">
-                            <div class="meta-label">Statut</div>
-                            <div class="meta-value">Développement Q1 2025</div>
+                            <div class="meta-label">Format</div>
+                            <div class="meta-value">Données interactives</div>
                         </div>
                     </div>
-                    <div class="meta-label">Indicateurs prévus</div>
+                    <div class="meta-label">Indicateurs extraits</div>
                     <div class="indicators-list">
                         <span class="indicator-chip">Prix spot (€/t)</span>
-                        <span class="indicator-chip">Prix moyen campagne</span>
-                        <span class="indicator-chip">Volatilité historique</span>
-                        <span class="indicator-chip">Écarts régionaux (bases)</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Méthodologie -->
         <div class="method-section">
             <div class="section-heading">Méthodologie d'intégration</div>
             <div class="method-steps">

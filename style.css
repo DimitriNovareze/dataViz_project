@@ -236,6 +236,13 @@ body {
     background: var(--cream);
 }
 
+#slider-annee {
+    accent-color: var(--forest);
+}
+
+#slider-annee:hover {
+    filter: brightness(0.9);
+}
 /* --------------------------------------------------------------------------
    7. ZONE CARTE
    -------------------------------------------------------------------------- */
@@ -363,7 +370,8 @@ body {
 .legend-bar {
     height: 8px;
     border-radius: 4px;
-    background: linear-gradient(to right, var(--cream-dark), var(--forest));
+    /* Remplacement du dégradé : Vert très pâle -> Vert moyen (type Nouvelle-Aquitaine) -> Vert foncé (var(--forest)) */
+    background: linear-gradient(to right, #e5f5e0, #74c476, var(--forest));
     margin-bottom: 4px;
 }
 
