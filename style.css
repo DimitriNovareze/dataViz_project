@@ -266,7 +266,7 @@ body {
 
 /* Zones (régions / départements) */
 .map-area {
-    stroke: white;
+    stroke: #95a5a6;
     stroke-width: 1px;
     vector-effect: non-scaling-stroke;
     transition: fill 0.4s ease, stroke 0.2s;
