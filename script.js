@@ -696,6 +696,33 @@ function resetZoom() {
     d3.select("#breadcrumb").classed("hidden", true);
 }
 
+function handleClickTable(d) {
+    // 1. Déduction de la région via le mapping statique
+    const regionCode = CONFIG.deptToRegion[d.deptCode];
+    const regionFeature = STATE.geo.regions.features.find(f => f.properties.code === regionCode);
+
+    // 2. Mise à jour de l'état cible pour les graphiques (focus sur le département)
+    STATE.chart.targetCode = d.deptCode;
+    STATE.chart.targetName = d.departement;
+
+    // 3. Mise à jour dynamique du filtre "culture" (si on a cliqué sur une ligne avec une autre culture)
+    if (STATE.filters.culture !== d.culture) {
+        STATE.filters.culture = d.culture;
+        d3.select("#select-culture").property("value", d.culture);
+    }
+
+    // 4. Logique de zoom et d'actualisation conditionnelle
+    if (STATE.view.regionCode !== regionCode && regionFeature) {
+        // On libère la contrainte de la région actuelle pour autoriser un nouveau zoom
+        STATE.view.regionCode = null;
+        // handleZoom effectue la transition géométrique puis appelle updateEngine() via .on("end")
+        handleZoom(regionFeature);
+    } else {
+        // Si la carte est DÉJÀ zoomée sur la bonne région, on se contente de rafraîchir les graphiques
+        updateEngine();
+    }
+}
+
 // TABLE
 
 function updateTable() {
@@ -716,7 +743,12 @@ function updateTable() {
         const feature = STATE.geo.depts.features.find(f => f.properties.code === deptCode);
         const deptName = feature ? feature.properties.nom : `Dépt ${deptCode}`;
         for (const [culture, avgRent] of cultures.entries()) {
-            if (avgRent > 0) flatData.push({ departement: deptName, culture, rent: avgRent });
+            if (avgRent > 0) flatData.push({ 
+                departement: deptName, 
+                deptCode: deptCode, // <-- NOUVEAU : On stocke le code pour s'en servir au clic
+                culture, 
+                rent: avgRent 
+            });
         }
     }
 
@@ -726,9 +758,14 @@ function updateTable() {
     const tbody = d3.select("#yield-table tbody");
     const rows = tbody.selectAll("tr").data(topData, d => d.departement + d.culture + d.rent);
 
+    // Toujours dans updateTable(), remplacez le bloc rows.join par ceci :
     rows.join(
         enter => {
-            const tr = enter.append("tr").style("opacity", 0);
+            const tr = enter.append("tr")
+                .style("opacity", 0)
+                .style("cursor", "pointer") // <-- NOUVEAU : Curseur visuel cliquable
+                .on("click", (event, d) => handleClickTable(d)); // <-- NOUVEAU : Écouteur d'événement
+            
             tr.append("td").text(d => d.departement).style("font-weight", "500");
             tr.append("td").text(d => d.culture);
             tr.append("td").text(d => Math.round(d.rent) + " €")
@@ -737,6 +774,9 @@ function updateTable() {
             return tr;
         },
         update => {
+            update.style("cursor", "pointer") // <-- S'assurer que ça reste cliquable après MAJ
+                .on("click", (event, d) => handleClickTable(d)); // <-- Écouteur d'événement
+                
             update.select("td:nth-child(1)").text(d => d.departement);
             update.select("td:nth-child(2)").text(d => d.culture);
             update.select("td:nth-child(3)").text(d => Math.round(d.rent) + " €");
