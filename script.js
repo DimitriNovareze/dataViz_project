@@ -7,7 +7,7 @@ const CONFIG = {
     },
     visu: {
         radiusMin: 6,
-        radiusMax: 20,
+        radiusMax: 25,
         colors: {
             prod: d3.interpolateGreens,
             stars: ["#ffffff", "#FFD700", "#FF4500"],
@@ -35,7 +35,7 @@ const CONFIG = {
 const STATE = {
     data: [],
     geo: { regions: null, depts: null },
-    filters: { culture: null, annee: null, saison: null },
+    filters: { culture: null, annee: null, saison: null, showRentabilite: true },
     view: { regionCode: null, zoomLevel: 1 },
     table: { allCultures: false },
     chart: { metric: 'production', targetName: 'France', targetCode: null }
@@ -146,12 +146,10 @@ function initMenus() {
     STATE.filters.Annee = maxAnnee;
     display.text(maxAnnee);
 
-    // .on("input") met à jour le texte visuel instantanément quand on glisse
     slider.on("input", function() {
         display.text(this.value); 
     });
 
-    // .on("change") lance le gros calcul D3 uniquement quand on lâche le clic
     slider.on("change", function() {
         STATE.filters.Annee = +this.value;
         updateEngine(); 
@@ -186,6 +184,12 @@ function initMenus() {
             .classed("active", STATE.table.allCultures)
             .text(STATE.table.allCultures ? "Sans Filtres" : "Culture ciblée");
         updateTable();
+    });
+
+
+    d3.select("#toggle-rentabilite").on("change", function() {
+        STATE.filters.showRentabilite = this.checked;
+        updateEngine(); // On relance le moteur pour effacer/dessiner les cercles
     });
 }
 // MAP
@@ -514,8 +518,9 @@ function renderMapLayer(data, scales) {
 }
 
 function renderSymbolsLayer(data, scales) {
+    const featureData = STATE.filters.showRentabilite ? data.features : [];
     const nodes = g.select("#map-symbols").selectAll("g.symbol-node")
-        .data(data.features, d => d.properties.code);
+        .data(featureData, d => d.properties.code);
 
     const nodesEnter = nodes.enter().append("g")
         .attr("class", "symbol-node")
@@ -543,13 +548,14 @@ function renderSymbolsLayer(data, scales) {
     const nodesUpdate = nodesEnter.merge(nodes);
 
     nodesUpdate.attr("transform", d => Utils.getCentroidStr(path, d, 1));
-
-    nodesUpdate.select("path.star")
+nodesUpdate.select("path.star")
         .attr("d", d => getStarPath(d, data.map, scales.radius))
-        .style("stroke-width", (0.2 / STATE.view.zoomLevel) + "px")
+        .style("stroke", "#ce670d") // Contour orange pour bien délimiter la forme
+        .style("stroke-width", (1.5 / STATE.view.zoomLevel) + "px")
         .call(u => u.transition().duration(CONFIG.visu.transitionDuration)
-            .style("fill", d => getStarColor(d, data.map, scales.starColor)));
-
+            .style("fill", "#dd8819")    // COULEUR FIXE : Un beau jaune chaud
+            .style("fill-opacity", 0.55) // TRANSPARENCE : 55% d'opacité (on voit très bien au travers)
+        );
     nodesUpdate.select("text.yield-label")
         .text(d => {
             const val = data.map.get(d.properties.code);
@@ -571,6 +577,7 @@ function renderSymbolsLayer(data, scales) {
 }
 
 function renderLegends(stats, scales) {
+    d3.select("#legend-rent-block").classed("hidden", !STATE.filters.showRentabilite);
     const fmtProd = formatProduction(stats.maxProd, true);
     d3.select("#legend-prod-min").text("0");
     d3.select("#legend-prod-max").text(fmtProd);
