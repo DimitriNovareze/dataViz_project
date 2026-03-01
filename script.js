@@ -106,7 +106,6 @@ async function initApp() {
         alert("Impossible de charger les données.");
     }
 }
-
 function initMenus() {
     const unique = (key) => [...new Set(STATE.data.map(d => d[key]))].sort();
 
@@ -126,9 +125,40 @@ function initMenus() {
         STATE.filters[key] = isNum ? +sel.property("value") : sel.property("value");
     };
 
+    // Initialisation Culture
     setupSelect("#select-culture", "culture");
-    setupSelect("#select-annee", "Annee", true);
+    
+    // --- NOUVEAU : Slider pour l'Année ---
+    const annees = unique("Annee").filter(a => a > 0); // Exclut les éventuelles années à 0 ou undefined
+    const minAnnee = d3.min(annees);
+    const maxAnnee = d3.max(annees);
+    
+    const slider = d3.select("#slider-annee");
+    const display = d3.select("#display-annee");
 
+    // Configuration des bornes du slider
+    slider
+        .attr("min", minAnnee)
+        .attr("max", maxAnnee)
+        .attr("step", 1)
+        .property("value", maxAnnee); // Se place sur l'année la plus récente par défaut
+
+    STATE.filters.Annee = maxAnnee;
+    display.text(maxAnnee);
+
+    // .on("input") met à jour le texte visuel instantanément quand on glisse
+    slider.on("input", function() {
+        display.text(this.value); 
+    });
+
+    // .on("change") lance le gros calcul D3 uniquement quand on lâche le clic
+    slider.on("change", function() {
+        STATE.filters.Annee = +this.value;
+        updateEngine(); 
+    });
+    // -------------------------------------
+
+    // Initialisation Saison
     const saisons = [...new Set(STATE.data.map(d => d.Saison))].filter(Boolean).sort();
     const selSaison = d3.select("#select-saison");
     selSaison.selectAll("option").data(saisons).enter().append("option").text(d => d);
@@ -149,6 +179,7 @@ function initMenus() {
         updateChart();
     });
 
+    // Filtre Tableau (Toutes cultures vs Culture ciblée)
     d3.select("#btn-table-filter").on("click", function() {
         STATE.table.allCultures = !STATE.table.allCultures;
         d3.select(this)
@@ -157,7 +188,6 @@ function initMenus() {
         updateTable();
     });
 }
-
 // MAP
 
 let svg, g, path, projection, tooltip, circleSymbol;
