@@ -628,11 +628,10 @@ function getFillColor(d, map, scale) {
     return (val && val.production > 0) ? scale(val.production) : CONFIG.visu.colors.noData;
 }
 
-function getStarColor(d, map, scale) {
+function getStarColor(d, map) {
     const val = map.get(d.properties.code);
-    return (val && val.rentabilite > 0) ? scale(val.rentabilite) : "none";
+    return (val && val.rentabilite > 0) ? "#e67e22" : "none";
 }
-
 function getStarPath(d, map, scale) {
     const val = map.get(d.properties.code);
     if (!val || val.rentabilite <= 0) return circleSymbol.size(0)();
