@@ -270,10 +270,15 @@ function processGeoData(filteredData) {
             r.count++;
         }
 
+        // Calcul du total France pour les pourcentages
+        let totalProd = 0;
+        for (const stats of regionStats.values()) totalProd += stats.prodSum;
+
         for (const [regCode, stats] of regionStats.entries()) {
             const rent = stats.count > 0 ? stats.rentSum / stats.count : 0;
-            dataMap.set(regCode, { production: stats.prodSum, rentabilite: rent });
-            if (stats.prodSum > maxProd) maxProd = stats.prodSum;
+            const pct = totalProd > 0 ? (stats.prodSum / totalProd) * 100 : 0;
+            dataMap.set(regCode, { production: stats.prodSum, rentabilite: rent, pct });
+            if (pct > maxProd) maxProd = pct;
             if (rent > maxRent) maxRent = rent;
             if (rent < minRent && rent > 0) minRent = rent;
         }
@@ -282,10 +287,19 @@ function processGeoData(filteredData) {
             CONFIG.deptToRegion[f.properties.code] === STATE.view.regionCode
         );
 
+        // Calcul du total région pour les pourcentages
+        let totalRegionProd = 0;
         for (const [deptCode, stats] of deptAnnualStats.entries()) {
             if (CONFIG.deptToRegion[deptCode] === STATE.view.regionCode) {
-                dataMap.set(deptCode, stats);
-                if (stats.production > maxProd) maxProd = stats.production;
+                totalRegionProd += stats.production;
+            }
+        }
+
+        for (const [deptCode, stats] of deptAnnualStats.entries()) {
+            if (CONFIG.deptToRegion[deptCode] === STATE.view.regionCode) {
+                const pct = totalRegionProd > 0 ? (stats.production / totalRegionProd) * 100 : 0;
+                dataMap.set(deptCode, { ...stats, pct });
+                if (pct > maxProd) maxProd = pct;
                 if (stats.rentabilite > maxRent) maxRent = stats.rentabilite;
                 if (stats.rentabilite < minRent && stats.rentabilite > 0) minRent = stats.rentabilite;
             }
@@ -578,9 +592,8 @@ nodesUpdate.select("path.star")
 
 function renderLegends(stats, scales) {
     d3.select("#legend-rent-block").classed("hidden", !STATE.filters.showRentabilite);
-    const fmtProd = formatProduction(stats.maxProd, true);
-    d3.select("#legend-prod-min").text("0");
-    d3.select("#legend-prod-max").text(fmtProd);
+    d3.select("#legend-prod-min").text("0%");
+    d3.select("#legend-prod-max").text(stats.maxProd > 0 ? stats.maxProd.toFixed(1) + "%" : "0%");
 
     const container = d3.select("#legend-size-container");
     container.html("");
@@ -632,7 +645,7 @@ function renderLegends(stats, scales) {
 
 function getFillColor(d, map, scale) {
     const val = map.get(d.properties.code);
-    return (val && val.production > 0) ? scale(val.production) : CONFIG.visu.colors.noData;
+    return (val && val.pct > 0) ? scale(val.pct) : CONFIG.visu.colors.noData;
 }
 
 function getStarColor(d, map) {
@@ -650,6 +663,8 @@ function showTooltip(event, d, map, scales) {
     const val = map.get(d.properties.code);
     let html = `<strong>${d.properties.nom}</strong>`;
     if (val && (val.production > 0 || val.rentabilite > 0)) {
+        const pctLabel = STATE.view.regionCode === null ? "de la France" : "de la région";
+        html += `<br><span style="color:#2ecc71">█</span> ${val.pct.toFixed(1)}% ${pctLabel}`;
         html += `<br><span style="color:#2ecc71">█</span> Prod: ${formatProduction(val.production)}`;
         html += `<br><span style="color:${scales.starColor(val.rentabilite)}">★</span> Rent: ${Math.round(val.rentabilite)} €/ha`;
     } else {
