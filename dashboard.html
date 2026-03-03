@@ -46,6 +46,13 @@
                 </div>
             </div>
 
+            <div class="control-group" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-weight: 500; color: #e67e22;">
+                        <input type="checkbox" id="toggle-rentabilite" checked style="margin-right: 10px; width: 16px; height: 16px; cursor: pointer;">
+                        Afficher la rentabilité (cercles)
+                    </label>
+                </div>
+
             <div id="breadcrumb" class="hidden">
                 <button id="btn-back">⬅ Vue Nationale</button>
                 <div id="region-title">France Entière</div>
@@ -97,8 +104,8 @@
                     <div id="bar-chart"></div>
                 </div>
 
-                <div class="legend-block">
-                    <label>Rentabilité (€/ha)</label>
+               <div class="legend-block" id="legend-rent-block" style="margin-top: 15px;">
+                    <label>Rendement (€/ha)</label>
                     <div id="legend-size-container"></div>
                 </div>
             </div>
