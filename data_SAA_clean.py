@@ -1,3 +1,6 @@
+### Script python pour traitement des données SAA
+
+
 import pandas as pd
 
 # 1. Définition du dictionnaire de correspondance (Mapping)
