@@ -246,7 +246,7 @@ function updateEngine() {
 }
 
 function processGeoData(filteredData) {
-    let geoFeatures, dataMap = new Map(), maxProd = 0, maxRent = 0, minRent = Infinity;
+    let geoFeatures, dataMap = new Map(), maxProd = 0, maxRent = 0, minRent = Infinity, maxRentPct = 0, minRentPct = Infinity;
 
     const deptAnnualStats = d3.rollup(filteredData,
         v => ({
@@ -270,44 +270,52 @@ function processGeoData(filteredData) {
             r.count++;
         }
 
-        // Calcul du total France pour les pourcentages
-        let totalProd = 0;
-        for (const stats of regionStats.values()) totalProd += stats.prodSum;
+        // Calcul du total France pour les pourcentages production ET rentabilité
+        let totalProd = 0, totalRent = 0;
+        for (const stats of regionStats.values()) { totalProd += stats.prodSum; totalRent += stats.rentSum; }
 
         for (const [regCode, stats] of regionStats.entries()) {
             const rent = stats.count > 0 ? stats.rentSum / stats.count : 0;
             const pct = totalProd > 0 ? (stats.prodSum / totalProd) * 100 : 0;
-            dataMap.set(regCode, { production: stats.prodSum, rentabilite: rent, pct });
+            const rentPct = totalRent > 0 ? (stats.rentSum / totalRent) * 100 : 0;
+            dataMap.set(regCode, { production: stats.prodSum, rentabilite: rent, pct, rentPct });
             if (pct > maxProd) maxProd = pct;
             if (rent > maxRent) maxRent = rent;
             if (rent < minRent && rent > 0) minRent = rent;
+            if (rentPct > maxRentPct) maxRentPct = rentPct;
+            if (rentPct < minRentPct && rentPct > 0) minRentPct = rentPct;
         }
     } else {
         geoFeatures = STATE.geo.depts.features.filter(f =>
             CONFIG.deptToRegion[f.properties.code] === STATE.view.regionCode
         );
 
-        // Calcul du total région pour les pourcentages
-        let totalRegionProd = 0;
+        // Calcul du total région pour les pourcentages production ET rentabilité
+        let totalRegionProd = 0, totalRegionRent = 0;
         for (const [deptCode, stats] of deptAnnualStats.entries()) {
             if (CONFIG.deptToRegion[deptCode] === STATE.view.regionCode) {
                 totalRegionProd += stats.production;
+                totalRegionRent += stats.rentabilite;
             }
         }
 
         for (const [deptCode, stats] of deptAnnualStats.entries()) {
             if (CONFIG.deptToRegion[deptCode] === STATE.view.regionCode) {
                 const pct = totalRegionProd > 0 ? (stats.production / totalRegionProd) * 100 : 0;
-                dataMap.set(deptCode, { ...stats, pct });
+                const rentPct = totalRegionRent > 0 ? (stats.rentabilite / totalRegionRent) * 100 : 0;
+                dataMap.set(deptCode, { ...stats, pct, rentPct });
                 if (pct > maxProd) maxProd = pct;
                 if (stats.rentabilite > maxRent) maxRent = stats.rentabilite;
                 if (stats.rentabilite < minRent && stats.rentabilite > 0) minRent = stats.rentabilite;
+                if (rentPct > maxRentPct) maxRentPct = rentPct;
+                if (rentPct < minRentPct && rentPct > 0) minRentPct = rentPct;
             }
         }
     }
 
     if (minRent === Infinity) minRent = 0;
-    return { features: geoFeatures, map: dataMap, stats: { maxProd, maxRent, minRent } };
+    if (minRentPct === Infinity) minRentPct = 0;
+    return { features: geoFeatures, map: dataMap, stats: { maxProd, maxRent, minRent, maxRentPct, minRentPct } };
 }
 
 function calculateScales(stats) {
@@ -318,7 +326,7 @@ function calculateScales(stats) {
             .domain([0, stats.maxRent * 0.5, stats.maxRent || 1])
             .range(CONFIG.visu.colors.stars),
         radius: d3.scaleSqrt()
-            .domain([stats.minRent, stats.maxRent || 1])
+            .domain([stats.minRentPct, stats.maxRentPct || 1])
             .range([
                 CONFIG.visu.radiusMin / STATE.view.zoomLevel,
                 CONFIG.visu.radiusMax / STATE.view.zoomLevel
@@ -580,7 +588,7 @@ nodesUpdate.select("path.star")
         .attr("dy", d => {
             const val = data.map.get(d.properties.code);
             if (!val || val.rentabilite <= 0) return 0;
-            const r = scales.radius(val.rentabilite);
+            const r = scales.radius(val.rentPct);
             const textWidth = Math.round(val.rentabilite).toString().length * (6 / STATE.view.zoomLevel);
             return (r * 2) > textWidth + (4 / STATE.view.zoomLevel)
                 ? "0.35em"
@@ -598,13 +606,13 @@ function renderLegends(stats, scales) {
     const container = d3.select("#legend-size-container");
     container.html("");
 
-    if (stats.maxRent === 0) return;
+    if (stats.maxRentPct === 0) return;
 
     const svgWidth = 150, svgHeight = 70;
     const legSvg = container.append("svg").attr("width", svgWidth).attr("height", svgHeight);
-    const values = [stats.maxRent, (stats.minRent + stats.maxRent) / 2, stats.minRent];
+    const values = [stats.maxRentPct, (stats.minRentPct + stats.maxRentPct) / 2, stats.minRentPct];
     const legScale = d3.scaleSqrt()
-        .domain([stats.minRent, stats.maxRent])
+        .domain([stats.minRentPct, stats.maxRentPct])
         .range([CONFIG.visu.radiusMin, CONFIG.visu.radiusMax]);
 
     const cx = 40;
@@ -617,7 +625,7 @@ function renderLegends(stats, scales) {
         .attr("cy", d => bottomY - legScale(d))
         .attr("r", d => legScale(d))
         .style("fill", "transparent")
-        .style("stroke", d => scales.starColor(d))
+        .style("stroke", d => scales.starColor(d * (stats.maxRent / (stats.maxRentPct || 1))))
         .style("stroke-width", "1.5px");
 
     legSvg.selectAll("line.legend-line")
@@ -636,7 +644,7 @@ function renderLegends(stats, scales) {
         .attr("class", "legend-text")
         .attr("x", cx + CONFIG.visu.radiusMax + 20)
         .attr("y", d => bottomY - legScale(d) * 2 + 4)
-        .text(d => Math.round(d) + " €")
+        .text(d => d.toFixed(1) + "%")
         .style("font-size", "10px")
         .style("fill", "#555");
 }
@@ -655,7 +663,7 @@ function getStarColor(d, map) {
 function getStarPath(d, map, scale) {
     const val = map.get(d.properties.code);
     if (!val || val.rentabilite <= 0) return circleSymbol.size(0)();
-    const r = scale(val.rentabilite);
+    const r = scale(val.rentPct);
     return circleSymbol.size(Math.PI * r * r)();
 }
 
