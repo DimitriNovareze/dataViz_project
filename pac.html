@@ -12,13 +12,12 @@
 <body>
 
 
-    <!-- DISCLAIMER BANNER -->
     <div class="disclaimer-banner" id="disclaimer-banner">
         <div class="disclaimer-inner">
             <span class="disclaimer-icon">⚠</span>
             <div class="disclaimer-text">
                 <strong>Outil pédagogique — estimations brutes uniquement.</strong>
-                Les montants affichés ne tiennent compte ni des <strong>coûts de production</strong> (intrants, semences, phytosanitaires…) ni des <strong>coûts d'investissement</strong> (mécanisation, bâtiments, foncier, moissoneusse batteuse …). Les résultats représentent un revenu brut indicatif avant toute déduction de charges.
+                Les montants affichés ne tiennent compte ni des <strong>coûts de production</strong> (intrants, semences, phytosanitaires…) ni des <strong>coûts d'investissement</strong> (mécanisation, bâtiments, foncier, moissonneuse-batteuse…). Les résultats représentent un revenu brut indicatif avant toute déduction de charges.
             </div>  
         </div>
     </div>
@@ -41,7 +40,6 @@
             <p>Estimez vos aides PAC 2023-2027 en ajustant les paramètres de votre exploitation. Cet outil pédagogique simplifié vous aide à comprendre les mécanismes de calcul.</p>
         </div>
 
-        <!-- Bannière chiffres clés -->
         <div class="pac-banner">
             <div class="pac-banner-item">
                 <div class="pac-banner-num">128 €/ha</div>
@@ -62,10 +60,8 @@
             </div>
         </div>
 
-        <!-- Grille principale -->
         <div class="pac-layout">
 
-            <!-- Colonne gauche : Paramètres -->
             <div class="pac-params">
                 <div class="pac-params-header">
                     <span class="pac-params-header-icon">⚙</span>
@@ -73,7 +69,6 @@
                 </div>
                 <div class="pac-params-body">
 
-                    <!-- Surface -->
                     <div class="pac-field">
                         <div class="pac-field-label">
                             <span>Surface totale (SAU)</span>
@@ -83,7 +78,6 @@
                         <p class="pac-field-hint">C'est la base de tout calcul : l'aide est payée à l'hectare déclaré.</p>
                     </div>
 
-                    <!-- Jeune Agriculteur -->
                     <div class="pac-field">
                         <div class="pac-field-label"><span>Statut de l'exploitant</span></div>
                         <div class="pac-toggle-row">
@@ -96,7 +90,6 @@
                         <p class="pac-field-hint">Forfait de 3 900 €/an pour les exploitants de moins de 40 ans.</p>
                     </div>
 
-                    <!-- Éco-régime -->
                     <div class="pac-field">
                         <div class="pac-field-label"><span>Choix de l'éco-régime</span></div>
                         <select class="pac-select" id="input-eco">
@@ -114,7 +107,6 @@
                 </div>
             </div>
 
-            <!-- Colonne droite : Résultat -->
             <div class="pac-result">
 
                 <div class="pac-result-hero">
@@ -124,7 +116,6 @@
                 </div>
 
                 <div class="pac-result-details">
-                    <!-- Aide de base -->
                     <div class="pac-detail-row">
                         <div class="pac-detail-color clr-base"></div>
                         <div class="pac-detail-info">
@@ -137,7 +128,6 @@
                         <div class="pac-detail-amount" id="amt-base">0 €</div>
                     </div>
 
-                    <!-- Redistributif -->
                     <div class="pac-detail-row">
                         <div class="pac-detail-color clr-redist"></div>
                         <div class="pac-detail-info">
@@ -150,7 +140,6 @@
                         <div class="pac-detail-amount" id="amt-redist">0 €</div>
                     </div>
 
-                    <!-- Éco-régime -->
                     <div class="pac-detail-row">
                         <div class="pac-detail-color clr-eco"></div>
                         <div class="pac-detail-info">
@@ -163,7 +152,6 @@
                         <div class="pac-detail-amount" id="amt-eco">0 €</div>
                     </div>
 
-                    <!-- Aide JA -->
                     <div class="pac-detail-row">
                         <div class="pac-detail-color clr-ja"></div>
                         <div class="pac-detail-info">
@@ -177,14 +165,12 @@
                     </div>
                 </div>
 
-                <!-- Donut chart -->
                 <div class="pac-chart-wrap">
                     <canvas class="pac-chart-canvas" id="resultChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Section Pédagogie -->
         <div class="pac-pedagogy">
             <div class="section-heading">Le raisonnement expliqué</div>
             <div class="pac-steps">
@@ -211,7 +197,6 @@
             </div>
         </div>
 
-        <!-- Note de bas de page PAC -->
         <div class="pac-note">
             <span class="pac-note-icon">ℹ</span>
             <p>Ce simulateur est un <strong>outil pédagogique simplifié</strong>. Les montants définitifs sont fixés chaque année par l'État français et dépendent de paramètres additionnels (convergence, plafonnement, couplage…). Sources : <a href="https://smag.tech/blog/guide-pac-2023-2027/" target="_blank" rel="noopener">SMAG PAC 2023-2027</a>, <a href="https://www.asp-public.fr/" target="_blank" rel="noopener">ASP France</a>.</p>
@@ -221,10 +206,9 @@
             <div class="page-header" style="margin-top:60px; padding-top:40px; border-top:1px solid var(--border);">
                 <span class="page-eyebrow">Données PREVICULTUR</span>
                 <h1>Estimation du profit cultural</h1>
-                <p>Croisez vos aides PAC avec la chiffre d'affaire par hectare réelle des cultures observée dans notre base de données. Choisissez votre département, vos cultures et votre surface pour estimer votre chiffre d'affaire globaux.</p>
+                <p>Croisez vos aides PAC avec le chiffre d'affaires par hectare réel des cultures observé dans notre base de données. Choisissez votre département, vos cultures et votre surface pour estimer votre chiffre d'affaires global.</p>
             </div>
 
-            <!-- Filtres -->
             <div class="profit-filters">
                 <div class="profit-filter-card">
                     <div class="profit-filter-label">Région</div>
@@ -244,21 +228,19 @@
                 </div>
             </div>
 
-            <!-- Assolements (cultures configurées par l'agriculteur) -->
             <div class="profit-assol-section">
                 <div class="section-heading">Mon assolement</div>
-                <p class="profit-assol-desc">Répartissez votre SAU entre les cultures disponibles. Le chiffre d'affaire est issue des données réelles du département et de l'année sélectionnés.</p>
+                <p class="profit-assol-desc">Répartissez votre SAU entre les cultures disponibles. Le chiffre d'affaires est issu des données réelles du département et de l'année sélectionnés.</p>
 
                 <div id="assol-container"></div>
 
                 <button class="profit-add-btn" id="btn-add-culture">+ Ajouter une culture</button>
             </div>
 
-            <!-- Résultat global -->
             <div class="profit-result-card" id="profit-result">
                 <div class="profit-result-left">
                     <div class="profit-result-block">
-                        <div class="profit-result-label">Chiffre d'affaire cultural estimé</div>
+                        <div class="profit-result-label">Chiffre d'affaires cultural estimé</div>
                         <div class="profit-result-big" id="profit-revenu-culture">0 €</div>
                         <div class="profit-result-sub">CA/hectare × surfaces, hors charges</div>
                     </div>
@@ -269,7 +251,7 @@
                     </div>
                     <div class="profit-result-divider"></div>
                     <div class="profit-result-block">
-                        <div class="profit-result-label">Chiffre d'affaire total estimé</div>
+                        <div class="profit-result-label">Chiffre d'affaires total estimé</div>
                         <div class="profit-result-big profit-result-total" id="profit-total">0 €</div>
                         <div class="profit-result-sub" id="profit-total-perha">0 € / ha</div>
                     </div>
@@ -279,7 +261,6 @@
                 </div>
             </div>
 
-            <!-- Tableau détaillé -->
             <div class="profit-table-section" id="profit-table-section" style="display:none;">
                 <div class="section-heading">Détail par culture</div>
                 <div class="profit-table-wrap">
