@@ -1,5 +1,5 @@
 /* ==================================================================
-   LOGIQUE DU CALCULATEUR PAC
+   SCRIPT POUR LA PAGE DU CALCULATEUR DE LA PAC
    ================================================================== */
 const fmt = n => n.toLocaleString('fr-FR');
 

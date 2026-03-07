@@ -1,3 +1,5 @@
+#Code permettant de traiter les données de stocks.
+
 import pandas as pd
 
 input_file = "SCR-GRC-histDEP_collecte_stock_depuis_2000-C25.csv"

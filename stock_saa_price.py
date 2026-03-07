@@ -1,3 +1,4 @@
+#Code permettant de merger les 3 dataset
 import pandas as pd
 import unicodedata
 
@@ -99,7 +100,7 @@ mois_ete = [4, 5, 6, 7, 8, 9]       # Avril à Septembre inclus
 mois_hiver = [10, 11, 12, 1, 2, 3]  # Octobre à Mars inclus
 
 
-cond_vide = df_final['MOIS'].isna()  # (cas de la pomme de terre)
+cond_vide = df_final['MOIS'].isna()  # (cas de la pomme de terre) / finalement on a enlevé la pomme de terre du fichier final.
 cond_ete = (df_final['saison'] == 'Été (Récolte)') & (df_final['MOIS'].isin(mois_ete))
 cond_hiver = (df_final['saison'] == 'Hiver (Stockage)') & (df_final['MOIS'].isin(mois_hiver)) #Hiver
 

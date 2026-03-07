@@ -1,3 +1,7 @@
+// SCRIPT POUR LA PAGE DASHBOARD (page avec la carte)
+
+
+
 // CONFIG – static parameters
 const CONFIG = {
     urls: {
