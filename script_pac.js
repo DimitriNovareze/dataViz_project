@@ -6,16 +6,12 @@ const CULTURE_COLORS = ['#1A3328', '#3D6B54', '#C9952A', '#8C3D1F', '#274D3B', '
 let currentPacTotal = 0;
 let assolRows = [];
 
-// ─── D3 DONUT HELPER ──────────────────────────────────────────────────────────
+function createDonut(containerId, cutout = 0.5) {
 
-function createDonut(containerId, cutout = 0.68) {
-    // Le conteneur peut être un <canvas> (ancien Chart.js) ou un <div>
-    // On insère le SVG dans le parent pour rester agnostique
     const el = document.getElementById(containerId);
     const parent = el.parentElement;
-    el.style.display = 'none'; // cache le canvas s'il existe
-
-    const size = 220; // taille fixe, responsive via viewBox
+    el.style.display = 'none'; 
+    const size = 150; 
     const r = size / 2, ri = r * cutout;
 
     const svg = d3.select(parent).append("svg")
@@ -114,7 +110,7 @@ function update() {
     [['bar-base', aideBase], ['bar-redist', aideRedist], ['bar-eco', aideEco], ['bar-ja', aideJA]]
         .forEach(([id, val]) => document.getElementById(id).style.width = (val / maxAide * 100) + '%');
 
-    if (!pacDonut) pacDonut = createDonut('resultChart', 0.68);
+    if (!pacDonut) pacDonut = createDonut('resultChart', 0.7);
     updateDonut(
         pacDonut,
         [aideBase, aideRedist, aideEco, aideJA],
