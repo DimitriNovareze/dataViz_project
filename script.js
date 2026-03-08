@@ -677,7 +677,7 @@ function showTooltip(event, d, map, scales) {
         const pctLabel = STATE.view.regionCode === null ? "de la France" : "de la région";
         html += `<br><span style="color:#2ecc71">█</span> ${val.pct.toFixed(1)}% ${pctLabel}`;
         html += `<br><span style="color:#2ecc71">█</span> Prod: ${formatProduction(val.production)}`;
-        html += `<br><span style="color:${scales.starColor(val.rentabilite)}">★</span> Rent: ${Math.round(val.rentabilite)} €/ha`;
+        html += `<br><span style="color:${scales.starColor(val.rentabilite)}">★</span> CA: ${Math.round(val.rentabilite)} €/ha`;
     } else {
         html += `<br><em>Pas de données</em>`;
     }

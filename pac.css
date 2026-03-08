@@ -739,7 +739,6 @@ body {
     color: var(--white);
 }
 
-/* Bouton ajouter */
 .profit-add-btn {
     display: block;
     width: 100%;
@@ -781,7 +780,6 @@ body {
 }
 
 .profit-result-block {
-    /* rien de spécial */
 }
 
 .profit-result-label {
@@ -893,7 +891,6 @@ body {
     vertical-align: middle;
 }
 
-/* Mini barre pourcentage dans le tableau */
 .profit-pct-bar-bg {
     display: inline-block;
     width: 60px;
